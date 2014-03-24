@@ -4,7 +4,7 @@
 import sys,math,random,re
 sys.dont_write_bytecode = True # disable writing .pyc files
 
-## Synonyms
+## Synonyms todo
 seed = random.seed     # convenient shorthand
 any  = random.choice   # another convenient shorthand
 
