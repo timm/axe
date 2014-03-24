@@ -19,10 +19,10 @@ def say(x):
 def showd(d):
   """Catch key values to string, sorted on keys.
      Ignore hard to read items (marked with '_')."""
-  return ' '.join([':%s %s' % (k,v)
-                   for k,v in
-                   sorted(d.items())
-                   if not "_" in k])
+  return '{'+ ' '.join([':%s %s' % (k,v)
+                        for k,v in
+                        sorted(d.items())
+                        if not "_" in k]) + '}'
 
 ### Print Nested Lists
 def align(lsts):
@@ -56,10 +56,7 @@ class Items():
   def override(i,d): i.items().update(d); return i
   def also(i, **d) : i.override(d)
   def __repr__(i) : 
-      return '{'+ ' '.join([':%s %s' % (k,v) 
-                   for k,v in
-                   sorted(i.items().items())
-                    if not "_" in k])  + '}'
+    return showd(i.items())
 
 class Slots(Items):
   "Items with a unique Id"
@@ -221,9 +218,9 @@ class Sample(Items):
     i.bins, i.tiny = bins, tiny
     i.stale()
   def stale(i)  : i._median,i._breaks = None,None
-  def median(i) : i.ok(); return i._median 
-  def breaks(i) : i.ok(); return i._breaks
-  def ok(i):
+  def median(i) : i.fresh(); return i._median 
+  def breaks(i) : i.fresh(); return i._breaks
+  def fresh(i):
     if not i._median: 
       lst  = i._cache
       n    = len(lst)
@@ -299,10 +296,22 @@ class Glue:
   def lohi(i,x)   : pass
   def weight(i,x) : pass
   def slots(i,x)  : pass
+  
 
-def TableGlue:
-  def __init__(i):
-_ 
+class Table(Glue):
+  def __init__(i,file):
+    i.t = table(file)
+    h = i.t.headers
+    goals = "<>!"
+    i.objectives = []
+    i.decisions  = []
+    for key,value in i.t.headers.items():
+      if key in goals:
+        i.objectives += value
+      else:
+        i.decisions += value
+  def __repr__(i): return 'T' + showd(i.__dict__)
+
 # Distance Calculations
 
 def dist(m,i,j, how=lambda x: x.dec):
@@ -437,3 +446,7 @@ def _chunkDemo(model='nasa93'):
       params[-1] = " " + str(params[-1])
       lines     += [pre + params + [" = "] + row.obj]
     align(lines)
+
+t=Table('nasa93a.csv')
+print map(lambda x: x.name, t.objectives)
+print map(lambda x: x.name, t.decisions)
