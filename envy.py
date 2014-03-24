@@ -19,6 +19,7 @@ def say(x):
 def showd(d):
   """Catch key values to string, sorted on keys.
      Ignore hard to read items (marked with '_')."""
+  d = d if  isinstance(d,dict) else d.__dict__
   return '{'+ ' '.join([':%s %s' % (k,v)
                         for k,v in
                         sorted(d.items())
@@ -300,17 +301,15 @@ class Glue:
 
 class Table(Glue):
   def __init__(i,file):
+    def goalp(x,goals="!<>"):
+      return [val for val in x if val in goals]
     i.t = table(file)
-    h = i.t.headers
-    goals = "<>!"
-    i.objectives = []
-    i.decisions  = []
-    for key,value in i.t.headers.items():
-      if key in goals:
-        i.objectives += value
-      else:
-        i.decisions += value
-  def __repr__(i): return 'T' + showd(i.__dict__)
+    i.obj = []
+    i.dec  = []
+    for key,value in i.t.at.items():
+      l = i.obj if goalp(key) else i.dec
+      l += [value]
+  def __repr__(i): return 'T' + showd(i)
 
 # Distance Calculations
 
@@ -448,5 +447,5 @@ def _chunkDemo(model='nasa93'):
     align(lines)
 
 t=Table('nasa93a.csv')
-print map(lambda x: x.name, t.objectives)
-print map(lambda x: x.name, t.decisions)
+print "obj:",map(lambda x: x.name, t.obj)
+print "dec:", map(lambda x: x.name, t.dec)
