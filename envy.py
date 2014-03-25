@@ -150,27 +150,35 @@ def table(source, rows = True, contents = row):
   return t
 
 ## Create Table 
-def table0(source, keepers= The.reader.keeping):
-  t = Slots(source=source, headers={}, _rows=[],at={})
-  for keeper in keepers: 
-    t.headers[keeper] = []
+def table0(source):
+  t = Slots(source = source,
+            depen=[], indep=[], nums =[], syms=[], 
+            more =[], less =[], klass=[], all =[], 
+            _rows=[], at   ={})
+  t.patterns= {'\$'    : t.nums,
+               '\.'    : t.syms,
+               '>'     : t.more,
+               '<'     : t.less,
+               '='     : t.klass,
+               '[!<>]' : t.depen,
+               '[^!<>]': t.indep,
+               '.'     : t.all}
   return t
 
 ## Create Table Header
-def head(cells,t, keepers= The.reader.keeping):
-  num = keepers[0]
+def head(cells,t,numc='$'):
   for col,cell in enumerate(cells):
-    what   = Num if num in cell else Sym
+    what   = Num if numc in cell else Sym
     header = what()
     header.col, header.name = col,cell
     t.at[cell] = header
-    for keeper in keepers:
-      if keeper in cell:
-        t.headers[keeper] += [header]
+    for pattern,val in t.patterns.items():
+      if re.search(pattern,cell):
+        val += [header]
 
 ## Create Table Rows
 def body(cells,t,rows):
-  for header in  t.at.values():
+  for header in  t.all:
     header + cells[header.col]
   if rows: 
     t._rows += [cells]
@@ -446,6 +454,7 @@ def _chunkDemo(model='nasa93'):
       lines     += [pre + params + [" = "] + row.obj]
     align(lines)
 
-t=Table('nasa93a.csv')
-print "obj:",map(lambda x: x.name, t.obj)
-print "dec:", map(lambda x: x.name, t.dec)
+t = Table('nasa93a.csv').t
+for x in t.nums: print x.name,x
+#print "obj:",map(lambda x: x.name, t.obj)
+#print "dec:", map(lambda x: x.name, t.dec)
