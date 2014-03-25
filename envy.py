@@ -1,6 +1,6 @@
 """
 #<
-ENVY: near-linear time recursive clustering.
+ENVY: near linear-time locality-based reasoning.
 Copyright (c) 2014, Tim Menzies, tim.menzies@gmail.com
 All rights reserved.
 
@@ -210,7 +210,7 @@ def table(source, rows = True, contents = row):
 def table0(source):
   t = Slots(source = source,
             depen=[], indep=[], nums =[], syms=[], 
-            more =[], less =[], klass=[], all =[], 
+            more =[], less =[], klass=[], headers=[], 
             _rows=[], at   ={})
   t.patterns= {'\$'    : t.nums,
                '\.'    : t.syms,
@@ -219,7 +219,7 @@ def table0(source):
                '='     : t.klass,
                '[!<>]' : t.depen,
                '[^!<>]': t.indep,
-               '.'     : t.all}
+               '.'     : t.headers}
   return t
 
 ## Create Table Header
@@ -235,7 +235,7 @@ def head(cells,t,numc='$'):
 
 ## Create Table Rows
 def body(cells,t,rows):
-  for header in  t.all:
+  for header in  t.headers:
     header + cells[header.col]
   if rows: 
     t._rows += [cells]
