@@ -6,8 +6,6 @@
 Default=index
 Src=${Src='https://raw.githubusercontent.com/timm/axe/master'}
 Cat=${Cat=" wget -q -O - $Src"}
-
-Files='index.cgi'
 Tmp=/tmp/$USER
 
 header() { cat<<-EOF
@@ -50,12 +48,16 @@ EOF
 mkdir -p $Tmp
 [ ! -f $Tmp/markup.py ] &&  makedown
 
-if   [ "$1" = "RESET" ]
-then
-    
-    $Cat/index.cgi > index.cgi 
+if   [ "$Q" = "RESET" ]
+then   
     makedown
-    exit
+    $Cat/index.cgi > index.cgi 
+    chmod 755 index.cgi
+    echo "<pre>"; echo ""; date
+    cksum  *
+    echo "`cat * | cksum` TOTAL"
+    echo '<a href="index.cgi">Continue.</a>'
+    exit 1
 fi
 
 
