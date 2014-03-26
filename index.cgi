@@ -6,6 +6,8 @@
 Default=index
 Src=${Src='https://raw.githubusercontent.com/timm/axe/master'}
 Cat=${Cat=" wget -q -O - $Src"}
+
+Files='index.cgi'
 Tmp=/tmp/$USER
 
 header() { cat<<-EOF
@@ -33,10 +35,9 @@ EOF
 Q=${QUERY_STRING:=$Default}
 Q=$(echo $Q | sed 's/[^\/\.0-9a-zA-Z]//g')
 
-[ "$2" = "render" ]  && Cat="cat ."
+[ "$2" = "render" ] && Cat="cat ./"
 
-makedown(){   
-   cat<<EOF > $Tmp/markup.py
+makedown() {   cat<<EOF > $Tmp/markup.py
 import markdown,sys
 str = '\n'.join(map(lambda x: x.rstrip('\n'),
                      sys.stdin.readlines()))
@@ -44,20 +45,19 @@ print markdown.Markdown(extensions=['footnotes',
            'def_list','tables','toc']).convert(str)
 EOF
 }
-
 mkdir -p $Tmp
-[ ! -f $Tmp/markup.py ] &&  makedown
+[ ! -f "$Tmp/markup.py" ] && makedown
 
 if   [ "$Q" = "RESET" ]
-then   
-    makedown
-    $Cat/index.cgi > index.cgi 
+then
+    
+    $Cat/index.cgi > index.cgi
     chmod 755 index.cgi
-    echo "<pre>"; echo ""; date
-    cksum  *
-    echo "`cat * | cksum` TOTAL"
-    echo '<a href="index.cgi">Continue.</a>'
-    exit 1
+    echo "<p>"; date
+    echo "<p>"; cksum  index.cgi
+    echo "<p>"; ls -lsat
+    echo '<p><a href="index.cgi">Continue.</a>'
+    exit 1    
 fi
 
 
