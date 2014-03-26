@@ -35,12 +35,12 @@ EOF
 Q=${QUERY_STRING:=$Default}
 Q=$(echo $Q | sed 's/[^\/\.0-9a-zA-Z]//g')
 
-[ $2 == "render" ] && Cat="cat ./"
+[ "$2" = "render" ]  && Cat="cat ."
 
-if   [ $1 == "RESET" ]
+if   [ "$1" = "RESET" ]
 then
     
-    echo $Cat/index.cgi 
+    echo $Cat/trunk/index.cgi 
     exit
     mkdir -p $Tmp
     cat<<EOF > $Tmp/markup.py
