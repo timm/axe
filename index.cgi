@@ -86,7 +86,7 @@ function pretty(str) {
   return pre str
 }
 EOF
-
+}
 mkdir -p $Tmp
 [ ! -f "$Tmp/markup.py" ] && makedown
 [ ! -f "$Tmp/py2md.awk" ] && makemd
