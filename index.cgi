@@ -4,7 +4,7 @@
 # begin config section
 
 Default=index
-Src=${Src='https://raw.githubusercontent.com/timm/axe/master'}
+Src=${Src='https://rawgithub.com/timm/axe/master'}
 Cat=${Cat=" wget -q -O - $Src"}
 
 Files='index.cgi'
