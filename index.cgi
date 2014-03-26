@@ -103,7 +103,7 @@ then
     echo '<p><a href="index.cgi">Continue.</a>'
     exit 1    
 fi
- 
+  
 echo "Content-type: text/html"
 echo ""
 header $Q
