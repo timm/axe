@@ -37,19 +37,24 @@ Q=$(echo $Q | sed 's/[^\/\.0-9a-zA-Z]//g')
 
 [ "$2" = "render" ]  && Cat="cat ."
 
-if   [ "$1" = "RESET" ]
-then
-    
-    echo $Cat/trunk/index.cgi 
-    exit
-    mkdir -p $Tmp
-    cat<<EOF > $Tmp/markup.py
+makedown(){   
+   cat<<EOF > $Tmp/markup.py
 import markdown,sys
 str = '\n'.join(map(lambda x: x.rstrip('\n'),
                      sys.stdin.readlines()))
 print markdown.Markdown(extensions=['footnotes',
            'def_list','tables','toc']).convert(str)
 EOF
+}
+
+mkdir -p $Tmp
+[ ! -f $Tmp/markup.py ] &&  makedown
+
+if   [ "$1" = "RESET" ]
+then
+    
+    $Cat/index.cgi > index.cgi 
+    makedown
     exit
 fi
 
