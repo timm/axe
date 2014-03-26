@@ -86,7 +86,7 @@ function pretty(str) {
   return pre str
 }
 EOF
-
+}
 mkdir -p $Tmp
 [ ! -f "$Tmp/markup.py" ] && makedown
 [ ! -f "$Tmp/py2md.awk" ] && makemd
@@ -109,8 +109,8 @@ echo ""
 header $Q
 #$Cat/header.html
 echo "</head><body>"
-if [[ "$Q" =~ .*py$ ]]
-    then $Cat/$Q  | gawk -f $Tmp/py2md.awk
-    else $Cat/$Q.md
-fi | python $Tmp/markup.py
+if   [[ "$Q" =~ .*py$ ]]
+then $Cat/$Q  | gawk -f $Tmp/py2md.awk
+else $Cat/$Q.md
+fi   | python $Tmp/markup.py
 #echo $Cat/footer.html
