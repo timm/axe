@@ -45,31 +45,14 @@ print markdown.Markdown(extensions=['footnotes',
            'def_list','tables','toc']).convert(str)
 EOF
 }
-mkdir -p $Tmp
-[ ! -f "$Tmp/markup.py" ] && makedown
-
-if   [ "$Q" = "RESET" ]
-then
-    $Cat/index.cgi > index.cgi
-    chmod 755 index.cgi
-    echo "<p>"; date
-    echo "<p>"; cksum  index.cgi
-    echo "<p>"; ls -lsat
-    echo '<p><a href="index.cgi">Continue.</a>'
-    exit 1    
-fi
-
-
-py2md() {  cat - |
-  gawk '       
-  /^#</,/^#>/               { next }
-  InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
-  InQ                       { print $0; next}
-  !InQ && gsub(/^""".*/,"") {InQ=1; print "</pre>"; next}
-  !InQ                      { print pretty($0) }
-  END                       { if (InQ) print "</pre>" }
-
-   BEGIN {
+makemd() { cat<<EOF > $Tmp/py2md.awk
+/^#</,/^#>/               { next }
+InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
+InQ                       { print $0; next}
+!InQ && gsub(/^""".*/,"") {InQ=1; print "</pre>"; next}
+!InQ                      { print pretty($0) }
+END                       { if (InQ) print "</pre>" }
+BEGIN {
      Color4="brown"
      Color2="teal"  
      Color1="DarkBlue"
@@ -86,48 +69,48 @@ py2md() {  cat - |
         Sep = "|"
      }
      Pat = "(" Pat ")"
-    }
-    function pretty(str) {
-       line++
-       pre=""
-       if (str !~ /^[ \t]*$/)
-         pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
-       gsub(/[\+=\*-/<>^]/,
-            "<font color=black>&</font>",str)
-       gsub(/<[\/]?code>/,"",str)
-       gsub(Pat,      "<font color="Color1">&</font>",str) 
-       gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
-       gsub(/#.*/,   "<font color="Color3">&</font>",str)
-       str = gensub(/(\y[_a-zA-Z0-9]+\y)\(/,
-           "<font color="Color4">\\1</font>(","g",str)
-       return pre str
-     }
-'
 }
+function pretty(str) {
+  line++
+  pre=""
+  if (str !~ /^[ \t]*$/)
+        pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
+  gsub(/[\+=\*-/<>^]/,
+        "<font color=black>&</font>",str)
+  gsub(/<[\/]?code>/,"",str)
+  gsub(Pat,      "<font color="Color1">&</font>",str) 
+  gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
+  gsub(/#.*/,   "<font color="Color3">&</font>",str)
+  str = gensub(/(\y[_a-zA-Z0-9]+\y)\(/,
+        "<font color="Color4">\\1</font>(","g",str)
+  return pre str
+}
+EOF
+
+mkdir -p $Tmp
+[ ! -f "$Tmp/markup.py" ] && makedown
+[ ! -f "$Tmp/py2md.awk" ] && makemd
+
+if   [ "$Q" = "REFRESH" ]
+then
+    makedown
+    makemd
+    $Cat/index.cgi > index.cgi
+    chmod 755 index.cgi
+    echo "<p>"; date
+    echo "<p>"; cksum  index.cgi
+    echo "<p>"; ls -lsat
+    echo '<p><a href="index.cgi">Continue.</a>'
+    exit 1    
+fi
 
 echo "Content-type: text/html"
 echo ""
-
-if [ "$Q" = "REFRESH" ]
-then
-    for i in $Files; do
-	wget -q -O - $Src/$i > $i
-    done
-    chmod 755 index.cgi
-    echo "<pre>"; echo ""; date
-    cksum  $Files
-    echo "`cat $Files | cksum` TOTAL"
-    echo '<a href="index.cgi">Continue.</a>'
-    exit 1
-fi
-if true
-then
-    header $Q
-    #$Cat/header.html
-    echo "</head><body>"
-    if [[ "$Q" =~ .*py$ ]]
-    then $Cat/$Q  | py2md
+header $Q
+#$Cat/header.html
+echo "</head><body>"
+if [[ "$Q" =~ .*py$ ]]
+    then $Cat/$Q  | gawk -f $Tmp/py2md.awk
     else $Cat/$Q.md
-    fi | python $Tmp/markup.py
-    #echo $Cat/footer.html
-fi
+fi | python $Tmp/markup.py
+#echo $Cat/footer.html
