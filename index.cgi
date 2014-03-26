@@ -4,8 +4,9 @@
 # begin config section
 
 Default=index
-Src=${Src='https://raw.githubusercontent.com/timm/axe/master/'}
-Cat=${Cat=' wget -q -O - '}
+Src=${Src='https://raw.githubusercontent.com/timm/axe/master'}
+Cat=${Cat=" wget -q -O - $Src"}
+
 Files='index.cgi'
 Tmp=/tmp/$USER
 
@@ -25,20 +26,6 @@ EOF
 }
 
 # end config
-########################################################
-# making dirs and files
-
-mkdir -p $Tmp
-
-cat<<EOF > $Tmp/markup.py
-import markdown
-import sys
-str = '\n'.join(map(lambda x: x.rstrip('\n'),
-                     sys.stdin.readlines()))
-print markdown.Markdown(extensions=['footnotes',
-           'def_list','tables','toc']).convert(str)
-EOF
-
 
 # end config section
 #########################################################
@@ -48,16 +35,33 @@ EOF
 Q=${QUERY_STRING:=$Default}
 Q=$(echo $Q | sed 's/[^\/\.0-9a-zA-Z]//g')
 
+[ $2 == "render" ] && Cat="cat ./"
+
+if   [ $1 == "RESET" ]
+then
+    
+    echo $Cat/index.cgi 
+    exit
+    mkdir -p $Tmp
+    cat<<EOF > $Tmp/markup.py
+import markdown,sys
+str = '\n'.join(map(lambda x: x.rstrip('\n'),
+                     sys.stdin.readlines()))
+print markdown.Markdown(extensions=['footnotes',
+           'def_list','tables','toc']).convert(str)
+EOF
+    exit
+fi
+
+
 py2md() {  cat - |
-  gawk '
-  BEGIN    { skip = 1 }
-  /^#</,/^#>/ { next }
-  /^"""/   { skip = 0 }
-  skip     { next     }
-  gsub(/^""".*/,"") { In =  1 - In ; print In ? "</pre>" : "<pre>" }
-           
-           { print In? $0 : pretty($0) }
-   END { if (In) print "</pre>" }
+  gawk '       
+  /^#</,/^#>/               { next }
+  InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
+  InQ                       { print $0; next}
+  !InQ && gsub(/^""".*/,"") {InQ=1; print "</pre>"; next}
+  !InQ                      { print pretty($0) }
+  END                       { if (InQ) print "</pre>" }
 
    BEGIN {
      Color4="brown"
@@ -108,13 +112,16 @@ then
     cksum  $Files
     echo "`cat $Files | cksum` TOTAL"
     echo '<a href="index.cgi">Continue.</a>'
-else
+    exit 1
+fi
+if true
+then
     header $Q
-    #$Cat $Src/header.html
+    #$Cat/header.html
     echo "</head><body>"
     if [[ "$Q" =~ .*py$ ]]
-    then cat $Q  | py2md
-    else cat $Q.md
+    then $Cat/$Q  | py2md
+    else $Cat/$Q.md
     fi | python $Tmp/markup.py
-    #$Cat $Src/footer.html
+    #echo $Cat/footer.html
 fi
