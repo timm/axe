@@ -51,36 +51,47 @@ Q=$(echo $Q | sed 's/[^\/\.0-9a-zA-Z]//g')
 py2md() {  cat - |
   gawk '
   BEGIN    { skip = 1 }
+  /^#</,/^#>/ { next }
   /^"""/   { skip = 0 }
   skip     { next     }
-  gsub(/^""".*/,"") { In =  1 - In }
-           { print In? $0 : "       " pretty($0) }
+  gsub(/^""".*/,"") { In =  1 - In ; print In ? "</pre>" : "<pre>" }
+           
+           { print In? $0 : pretty($0) }
+   END { if (In) print "</pre>" }
 
-  BEGIN {
-     Color1="brown"
+   BEGIN {
+     Color4="brown"
      Color2="teal"  
-     Color3="blue"
-     Words = "function gsub sub gensub "      \
-             " for in int if else while print printf" \
-             " sprintf rand switch"                    \
-             " BEGIN END next continue  "               \
+     Color1="DarkBlue"
+     Color3="f79a32"
+     Words = "def "      \
+             " for in int if or len  True False str lambda and not "\
+             " class else while print import " \
+             " sprintf rand :  switch"          \
+             " BEGIN END next continue  "        \
              " return length "
      split(Words,Tmp," ")
      for(Word in Tmp) {
         Pat = Pat Sep "\\y" Tmp[Word] "\\y"
         Sep = "|"
-      }
-      Pat = "(" Pat ")"
-  }
-  function pretty(s) {
-       gsub(/<[\/]?code>/,"",s)
-       gsub(Pat,      "<b><font color="Color1">&</font></b>",s) 
-       gsub(/"[^"]*"/,"<b><font color="Color2">&</font></b>",s)
-       gsub(/#.*/,   "<b><font color="Color3">&</font></b>",s)
-       gsub(/[{}]/,   "<b>&</b>",s)
-       return s 
-  }
-
+     }
+     Pat = "(" Pat ")"
+    }
+    function pretty(str) {
+       line++
+       pre=""
+       if (str !~ /^[ \t]*$/)
+         pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
+       gsub(/[\+=\*-/<>^]/,
+            "<font color=black>&</font>",str)
+       gsub(/<[\/]?code>/,"",str)
+       gsub(Pat,      "<font color="Color1">&</font>",str) 
+       gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
+       gsub(/#.*/,   "<font color="Color3">&</font>",str)
+       str = gensub(/(\y[_a-zA-Z0-9]+\y)\(/,
+           "<font color="Color4">\\1</font>(","g",str)
+       return pre str
+     }
 '
 }
 
@@ -100,9 +111,10 @@ then
 else
     header $Q
     #$Cat $Src/header.html
+    echo "</head><body>"
     if [[ "$Q" =~ .*py$ ]]
     then cat $Q  | py2md
     else cat $Q.md
-    fi 
+    fi | python $Tmp/markup.py
     #$Cat $Src/footer.html
 fi

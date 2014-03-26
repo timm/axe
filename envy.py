@@ -53,11 +53,13 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###################################################
 #>>
                                      
-"""
 
 # Standard Utilities
 
 ## Start up
+
+"""
+
 import sys,math,random,re
 sys.dont_write_bytecode = True # disable writing .pyc files
 
