@@ -50,7 +50,6 @@ mkdir -p $Tmp
 
 if   [ "$Q" = "RESET" ]
 then
-    
     $Cat/index.cgi > index.cgi
     chmod 755 index.cgi
     echo "<p>"; date
