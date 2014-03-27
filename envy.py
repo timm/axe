@@ -93,7 +93,7 @@ def align(lsts,sep=' '):
       widths[n] = max(widths.get(n,0),w)
   for lst in lsts: # pass2- print to max width
     for n,x in enumerate(lst):
-      say(('%s%s' % (x,sep)).rjust(widths[n],' '))
+      say(('%s' % x).rjust(widths[n],' ')+sep)
     print ""
   print ""
 
@@ -552,8 +552,8 @@ def _t1(f='data/nasa93a.csv'):
   for _,leaf in leafs(tree):
     print ""
     dittos={}
-    lst= [ditto(r.dec,dittos) for r in leaf.value]
-    align(lst)
+    align([ditto(r.dec + r.obj,dittos) 
+           for r in leaf.value])
 
 The = Slots(normalize=True, missing='?')
 
