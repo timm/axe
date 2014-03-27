@@ -53,7 +53,7 @@ InQ                       { print $0; next}
 !InQ                      { print pretty($0) }
 END                       { if (InQ) print "</pre>" }
 BEGIN {
-     Color4="black"; #Color4="white"
+     Color4="gray"; #Color4="white"
      Color2="BA2121"  
      Color1="008000"
      Color3="408080"
