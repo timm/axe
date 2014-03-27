@@ -84,7 +84,7 @@ def showd(d):
                         if not "_" in k]) + '}'
 
 ### Print Nested Lists
-def align(lsts):
+def align(lsts,sep=' '):
   "Print, filled to max width of each column."
   widths = {}
   for lst in lsts: # pass1- find column max widths
@@ -93,7 +93,7 @@ def align(lsts):
       widths[n] = max(widths.get(n,0),w)
   for lst in lsts: # pass2- print to max width
     for n,x in enumerate(lst):
-      say(('%s' % x).rjust(widths[n],' '))
+      say(('%s%s' % (x,sep)).rjust(widths[n],' '))
     print ""
   print ""
 
@@ -381,21 +381,21 @@ def chops(lst,
 # Glue
 
 class Glue:
-  def weight(i,x,supervised) : pass
-  def lohi(  i,x,supervised) : pass
-  def what(   i,x,supervised) : pass
+  def weight(i,x,focus) : pass
+  def lohi(  i,x,focus) : pass
+  def things(   i,x,focus) : pass
   def slots( i,x)            : pass
 
 class Table(Glue):
   def __init__(i,file):
     i.t = table(file)
-  def what(i,slots, supervised=True):
-    return slots.obj if supervised else slots.dec
-  def lohi(i,x, supervised=True):
-    what = i.t.dep if supervised else i.t.indep
+  def things(i,slots, focus=0):
+    return slots.obj if focus else slots.dec
+  def lohi(i,x, focus=0):
+    what = i.t.depen if focus else i.t.indep
     h = what[x]
     return (h.lo, h.hi)
-  def weight(i,x, supervised=True): 
+  def weight(i,x, focus=0): 
     return 1
   def slots(i):
     return [Slots( 
@@ -406,24 +406,24 @@ class Table(Glue):
   
 # Distance Calculations
 
-def dist(m,i,j,supervised=True):
+def dist(m,i,j,focus):
   "Euclidean distance 0 <= d <= 1 between things"
-  d1 = m.what(i,supervised)
-  d2 = m.what(j,supervised)
+  thing1 = m.things(i,focus)
+  thing2 = m.things(j,focus)
   deltas, n = 0, 0
-  for d,x in enumerate(d1):
-    y = d2[d]
-    v1 = normalize(m,x,d,supervised)
-    v2 = normalize(m,x,d,supervised)
+  for d,x in enumerate(thing1):
+    y = thing2[d]
+    v1 = normalize(m,x,d,focus)
+    v2 = normalize(m,x,d,focus)
     w  = m.weight(d)
     deltas,n = squaredDifference(m,v1,v2,w,deltas,n)
   return deltas**0.5 / (n+0.0001)**0.5
 
-def normalize(m,x,d,supervised):
+def normalize(m,x,d,focus):
   if not The.normalize : return x
   if x == The.missing  : return x
   if isinstance(x,str) : return x
-  lo,hi = m.lohi(d,supervised)
+  lo,hi = m.lohi(d,focus)
   return (x - lo)*1.0 / (hi - lo + 0.0001)
  
 def squaredDifference(m,v1,v2,most,sum=0,n=0):
@@ -444,24 +444,24 @@ def squaredDifference(m,v1,v2,most,sum=0,n=0):
 
 # Clustering
 
-def fastdiv(m,data,details, how):
+def fastdiv(m,data,details, focus):
   "Divide data at median of two distant items."
-  west, east = twoDistantPoints(m,data,how)
-  c    = dist(m, west, east, how)
+  west, east = twoDistantPoints(m,data,focus)
+  c    = dist(m, west, east, focus)
   for i in data:
-    a   = dist(m,i, west, how)
-    b   = dist(m,i, east, how)
+    a   = dist(m,i, west, focus)
+    b   = dist(m,i, east, focus)
     i.x = (a*a + c*c - b*b)/(2*c + 0.0001) # cosine rule
   data = sorted(data,key=lambda i: i.x)
   n    = len(data)/2
   details.also(west=west, east=east, c=c, cut=data[n].x)
   return data[:n], data[n:]
 
-def twoDistantPoints(m,data,how):
+def twoDistantPoints(m,data,focus):
   def furthest(i):
     out,d= i,0
     for j in data:
-      tmp = dist(m,i,j,how)
+      tmp = dist(m,i,j,focus)
       if tmp > d: out,d = j,tmp
     return out
   one  = any(data)      # 1) pick any thing
@@ -476,7 +476,7 @@ def settings(**has):
                depthMax= 10,     # max tree depth
                b4      = '|.. ', # indent string
                verbose = False,  # show trace info?
-               supervised= False # if true, cluster on objectives
+               focus   = 0      # cluster on indepent vars
    ).override(has)
 
 def chunk(m,data,slots=None, lvl=0,up=None):
@@ -496,7 +496,7 @@ def chunk(m,data,slots=None, lvl=0,up=None):
   else:
     show("")
     wests,easts = fastdiv(m,data,tree,
-                          slots.supervised)
+                          slots.focus)
     if not worse(wests, easts, tree) :
       tree._left = chunk(m,wests, slots, lvl+1, tree)
     if not worse(easts, wests, tree) :
