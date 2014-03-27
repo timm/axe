@@ -54,9 +54,9 @@ InQ                       { print $0; next}
 END                       { if (InQ) print "</pre>" }
 BEGIN {
      Color4="brown"; Color4="white"
-     Color2="#BA2121"  
+     Color2="BA2121"  
      Color1="008000"
-     Color3="#408080"
+     Color3="408080"
      Words = "def "      \
              " for in int if or len  True False str lambda and not "\
              " class else while print import " \
