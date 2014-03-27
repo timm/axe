@@ -45,7 +45,7 @@ print markdown.Markdown(extensions=['footnotes',
            'def_list','tables','toc']).convert(str)
 EOF
 }
-makemd() { cat<<EOF > $Tmp/py2md.awk
+makemd() { cat<<"EOF" > $Tmp/py2md.awk
 /^#</,/^#>/               { next }
 InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
 InQ                       { print $0; next}
