@@ -54,7 +54,7 @@ InQ                       { print $0; next}
 END                       { if (InQ) print "</pre>" }
 BEGIN {
 
-     Color4="brown"
+     Color4="brown"; Color4="DarkGray"
      Color2="teal"  
      Color1="DarkBlue"
      Color3="f79a32"
@@ -78,7 +78,7 @@ function pretty(str) {
   if (str !~ /^[ \t]*$/)
         pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
   gsub(/[\+=\*-/<>^{}\[\]]/,
-        "<font color=gray><b>&</b></font>",str)
+        "<font color=black><b>&</b></font>",str)
   gsub(/<[\/]?code>/,"",str)
   gsub(Pat,      "<font color="Color1"><b>&</b></font>",str) 
   gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
