@@ -53,10 +53,12 @@ InQ                       { print $0; next}
 !InQ                      { print pretty($0) }
 END                       { if (InQ) print "</pre>" }
 BEGIN {
-     Color4="blue"; #Color4="white"
-     Color2="BA2121"  
-     Color1="008000"
-     Color3="orange"
+
+     Color4="brown"
+     Color2="teal"  
+     Color1="DarkBlue"
+     Color3="f79a32"
+
      Words = "def "      \
              " for in int if or len  True False str lambda and not "\
              " class else while print import " \
