@@ -247,8 +247,8 @@ def table0(source):
 ## Create Table Header
 def head(cells,t,numc='$'):
   for col,cell in enumerate(cells):
-    what   = Num if numc in cell else Sym
-    header = what()
+    this   = Num if numc in cell else Sym
+    header = this()
     header.col, header.name = col,cell
     t.at[cell] = header
     for pattern,val in t.patterns.items():
@@ -257,7 +257,7 @@ def head(cells,t,numc='$'):
 
 ## Create Table Rows
 def body(cells,t,rows):
-  for header in  t.headers:
+  for header in t.headers:
     header + cells[header.col]
   if rows: 
     t._rows += [cells]
@@ -383,13 +383,13 @@ def chops(lst,
 class Glue:
   def weight(i,x,supervised) : pass
   def lohi(  i,x,supervised) : pass
-  def how(   i,x,supervised) : pass
+  def what(   i,x,supervised) : pass
   def slots( i,x)            : pass
 
 class Table(Glue):
   def __init__(i,file):
     i.t = table(file)
-  def how(i,slots, supervised=True):
+  def what(i,slots, supervised=True):
     return slots.obj if supervised else slots.dec
   def lohi(i,x, supervised=True):
     what = i.t.dep if supervised else i.t.indep
@@ -407,9 +407,9 @@ class Table(Glue):
 # Distance Calculations
 
 def dist(m,i,j,supervised=True):
-  "Euclidean distance 0 <= d <= 1 between decisions"
-  d1 = m.how(i,supervised)
-  d2 = m.how(j,supervised)
+  "Euclidean distance 0 <= d <= 1 between things"
+  d1 = m.what(i,supervised)
+  d2 = m.what(j,supervised)
   deltas, n = 0, 0
   for d,x in enumerate(d1):
     y = d2[d]
@@ -425,7 +425,7 @@ def normalize(m,x,d,supervised):
   if isinstance(x,str) : return x
   lo,hi = m.lohi(d,supervised)
   return (x - lo)*1.0 / (hi - lo + 0.0001)
-
+ 
 def squaredDifference(m,v1,v2,most,sum=0,n=0):
   def furthestFromV1() : 
     return  0 if v1 > 0.5 else 1
@@ -543,7 +543,7 @@ def _chunkDemo(model='nasa93'):
     align(lines)
 
 @demo
-def _t1(f='nasa93a.csv'):
+def _t1(f='data/nasa93a.csv'):
   "basic table "
   m = Table(f)
   tree = chunk(m,
