@@ -61,7 +61,7 @@ BEGIN {
 
      Words = "def "      \
              " for in int if or len  True False str lambda and not "\
-             " class else while print import " \
+             " class else while print import [ ]" \
              " sprintf rand :  switch"          \
              " BEGIN END next continue  "        \
              " return length "
