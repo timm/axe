@@ -82,7 +82,7 @@ function pretty(str) {
   gsub(/<[\/]?code>/,"",str)
   gsub(Pat,      "<font color="Color1"><b>&</b></font>",str) 
   gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
-  gsub(/(^[ \t]+"""|#.*)/,   "<font color="Color3">&</font>",str)
+  gsub(/#.*/,   "<font color="Color3">&</font>",str)
   str = gensub(/(\y[_a-zA-Z0-9]+\y)\(/,
         "<font color="Color4">\\1</font>(","g",str)
   return pre str
