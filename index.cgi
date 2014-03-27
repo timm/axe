@@ -78,7 +78,7 @@ function pretty(str) {
   if (str !~ /^[ \t]*$/)
         pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
   gsub(/[\+=\*-/<>^{}\[\]]/,
-        "<font color=darkgray><b>&</b></font>",str)
+        "<font color=gray><b>&</b></font>",str)
   gsub(/<[\/]?code>/,"",str)
   gsub(Pat,      "<font color="Color1"><b>&</b></font>",str) 
   gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
