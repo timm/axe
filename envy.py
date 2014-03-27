@@ -140,10 +140,31 @@ The=Slots(reader = Slots(bad     = r'(["\' \t\r\n]|#.*)',
 
 ## Type Conversation
 def atom(x):
-  try: return float(x)
-  except: return x
+  try              : return int(x)
+  except ValueError:
+    try              : return float(x)
+    except ValueError: return x
 
 def identity(X): return x
+
+def cmd(com="demo('-h')"):
+  "Convert command line to a function call."
+  if len(sys.argv) < 2: return com
+  def strp(x): return isinstance(x,basestring)
+  def wrap(x): return "'%s'"%x if strp(x) else str(x)
+  words = map(wrap,map(atom,sys.argv[2:]))
+  return sys.argv[1] + '(' + ','.join(words) + ')'
+
+def demo(f=None,demos=[]): 
+  def demoDoc(d):
+    return '# '+d.__doc__+"\n" if d.__doc__ else ""  
+  if f == '-h':
+    for d in demos: 
+      print d.func_name+'()', demoDoc(d)
+  if f: demos.append(f); return f
+  s='|'+'='*40 +'\n'
+  for d in demos: 
+    print '\n==|',d.func_name,s,demoDoc(d),d()
 
 ## Iterators
 
@@ -201,10 +222,10 @@ def row(file,skip=The.reader.char.skip):
 
 ## Read Headers and Rows
 def table(source, rows = True, contents = row):
-  t= table0(source)
+  t = table0(source)
   for n,cells in contents(source):  
-    if n == 0: head(cells,t) 
-    else     : body(cells,t,rows) 
+    if n == 0 : head(cells,t) 
+    else      : body(cells,t,rows) 
   return t
 
 ## Create Table 
@@ -218,8 +239,8 @@ def table0(source):
                '>'     : t.more,
                '<'     : t.less,
                '='     : t.klass,
-               '[!<>]' : t.depen,
-               '[^!<>]': t.indep,
+               '[=<>]' : t.depen,
+               '[^=<>]': t.indep,
                '.'     : t.headers}
   return t
 
@@ -360,47 +381,55 @@ def chops(lst,
 # Glue
 
 class Glue:
-  def lohi(i,x)   : pass
-  def weight(i,x) : pass
-  def slots(i,x)  : pass
-  
+  def weight(i,x,supervised) : pass
+  def lohi(  i,x,supervised) : pass
+  def how(   i,x,supervised) : pass
+  def slots( i,x)            : pass
 
 class Table(Glue):
   def __init__(i,file):
-    def goalp(x,goals="!<>"):
-      return [val for val in x if val in goals]
     i.t = table(file)
-    i.obj = []
-    i.dec  = []
-    for key,value in i.t.at.items():
-      l = i.obj if goalp(key) else i.dec
-      l += [value]
+  def how(i,slots, supervised=True):
+    return slots.obj if supervised else slots.dec
+  def lohi(i,x, supervised=True):
+    what = i.t.dep if supervised else i.t.indep
+    h = what[x]
+    return (h.lo, h.hi)
+  def weight(i,x, supervised=True): 
+    return 1
+  def slots(i):
+    return [Slots( 
+                dec= [row[h.col] for h in i.t.indep],
+                obj= [row[h.col] for h in i.t.depen])
+            for row in i.t._rows]
   def __repr__(i): return 'T' + showd(i)
-
+  
 # Distance Calculations
 
-def dist(m,i,j, how=lambda x: x.dec):
+def dist(m,i,j,supervised=True):
   "Euclidean distance 0 <= d <= 1 between decisions"
-  d1,d2 = how(i), how(j)
+  d1 = m.how(i,supervised)
+  d2 = m.how(j,supervised)
   deltas, n = 0, 0
   for d,x in enumerate(d1):
     y = d2[d]
-    v1 = normalize(m, d, x)
-    v2 = normalize(m, d, y)
-    w  = weight(m,d)
+    v1 = normalize(m,x,d,supervised)
+    v2 = normalize(m,x,d,supervised)
+    w  = m.weight(d)
     deltas,n = squaredDifference(m,v1,v2,w,deltas,n)
   return deltas**0.5 / (n+0.0001)**0.5
 
-def normalize(m,x,value) :
-  if not The.normalize     : return value
-  if value == The.missing  : return value
-  if isinstance(value,str) : return value
-  lo, hi = lohi(m,x)
-  return (value - lo) / (hi - lo + 0.0001)
+def normalize(m,x,d,supervised):
+  if not The.normalize : return x
+  if x == The.missing  : return x
+  if isinstance(x,str) : return x
+  lo,hi = m.lohi(d,supervised)
+  return (x - lo)*1.0 / (hi - lo + 0.0001)
 
 def squaredDifference(m,v1,v2,most,sum=0,n=0):
   def furthestFromV1() : 
     return  0 if v1 > 0.5 else 1
+  inc = 0
   if not v1 == v2 == The.missing: 
     if v1 == The.missing: 
       v1,v2 = v2,v1 # at the very least, v1 is known
@@ -422,7 +451,7 @@ def fastdiv(m,data,details, how):
   for i in data:
     a   = dist(m,i, west, how)
     b   = dist(m,i, east, how)
-    i.x = (a*a + c*c - b*b)/(2*c) # cosine rule
+    i.x = (a*a + c*c - b*b)/(2*c + 0.0001) # cosine rule
   data = sorted(data,key=lambda i: i.x)
   n    = len(data)/2
   details.also(west=west, east=east, c=c, cut=data[n].x)
@@ -447,7 +476,7 @@ def settings(**has):
                depthMax= 10,     # max tree depth
                b4      = '|.. ', # indent string
                verbose = False,  # show trace info?
-               how= lambda x:x.dec # how to measure distance
+               supervised= False # if true, cluster on objectives
    ).override(has)
 
 def chunk(m,data,slots=None, lvl=0,up=None):
@@ -466,11 +495,12 @@ def chunk(m,data,slots=None, lvl=0,up=None):
     tree.value = data
   else:
     show("")
-    wests,easts = fastdiv(m, data, tree, slots.how)
+    wests,easts = fastdiv(m,data,tree,
+                          slots.supervised)
     if not worse(wests, easts, tree) :
-      tree._left  = chunk(m, wests, slots, lvl+1, tree)
+      tree._left = chunk(m,wests, slots, lvl+1, tree)
     if not worse(easts, wests, tree) :
-      tree._right = chunk(m, easts, slots, lvl+1, tree)
+      tree._right = chunk(m,easts, slots, lvl+1, tree)
   return tree
 
 def worse(down1,down2,here): return False
@@ -512,7 +542,23 @@ def _chunkDemo(model='nasa93'):
       lines     += [pre + params + [" = "] + row.obj]
     align(lines)
 
-t = Table('nasa93a.csv').t
-for x in t.nums: print x.name,x
+@demo
+def _t1(f='nasa93a.csv'):
+  "basic table "
+  m = Table(f)
+  tree = chunk(m,
+               m.slots(),
+               settings(verbose=True))
+  for _,leaf in leafs(tree):
+    print ""
+    dittos={}
+    lst= [ditto(r.dec,dittos) for r in leaf.value]
+    align(lst)
+
+The = Slots(normalize=True, missing='?')
+
+if __name__ == '__main__': eval(cmd())
+
 #print "obj:",map(lambda x: x.name, t.obj)
 #print "dec:", map(lambda x: x.name, t.dec)
+
