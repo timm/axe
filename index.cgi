@@ -97,6 +97,7 @@ then
     makemd
     $Cat/index.cgi > index.cgi
     chmod 755 index.cgi
+    chmod +x index.cgi
     echo "<p>"; date
     echo "<p>"; cksum  index.cgi
     echo "<p>"; ls -lsat
