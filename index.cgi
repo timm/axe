@@ -61,7 +61,7 @@ BEGIN {
 
      Words = "def "      \
              " for in int if or len  True False str lambda and not "\
-             " class else while print import \\[ \\]" \
+             " class else while print import " \
              " sprintf rand :  switch"          \
              " BEGIN END next continue  "        \
              " return length "
@@ -77,8 +77,8 @@ function pretty(str) {
   pre=""
   if (str !~ /^[ \t]*$/)
         pre= sprintf("<font color=#BBB>%5d:</font>   ",line)
-  gsub(/[\+=\*-/<>^]/,
-        "<font color=black>&</font>",str)
+  gsub(/[\+=\*-/<>^{}\[\]]/,
+        "<font color=orange><b>&</b></font>",str)
   gsub(/<[\/]?code>/,"",str)
   gsub(Pat,      "<font color="Color1"><b>&</b></font>",str) 
   gsub(/"[^"]*"/,"<font color="Color2">&</font>",str)
