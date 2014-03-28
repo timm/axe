@@ -191,6 +191,10 @@ def leafs(t):
     if not node._left and not node._right:
       yield lvl,node
 
+def tables(t0,tree):
+  for _,leaf in leafs(tree):
+    t1 = clone(t0)
+    yield [body(row,t1) for row in leaf.value]
 
 # Disk Tables
 
@@ -255,14 +259,19 @@ def head(cells,t,numc='$'):
     for pattern,val in t.patterns.items():
       if re.search(pattern,cell):
         val += [header]
+  return t
 
 ## Create Table Rows
-def body(cells,t,rows):
+def body(cells,t,rows=True):
   for header in t.headers:
     header + cells[header.col]
   if rows: 
     t._rows += [cells]
 
+def clone(t) :
+  return head([h.name for h in t.headers],
+              table0('copy of '+t.source))
+  
 # Meta Classes
 
 ## Sym
@@ -415,7 +424,7 @@ def dist(m,i,j,focus):
   for d,x in enumerate(thing1):
     y = thing2[d]
     v1 = normalize(m,x,d,focus)
-    v2 = normalize(m,x,d,focus)
+    v2 = normalize(m,y,d,focus)
     w  = m.weight(d)
     deltas,n = squaredDifference(m,v1,v2,w,deltas,n)
   return deltas**0.5 / (n+0.0001)**0.5
@@ -431,7 +440,7 @@ def squaredDifference(m,v1,v2,most,sum=0,n=0):
   def furthestFromV1() : 
     return  0 if v1 > 0.5 else 1
   inc = 0
-  if not v1 == v2 == The.missing: 
+  if not v1 ==  The.missing and not v2 == The.missing: 
     if v1 == The.missing: 
       v1,v2 = v2,v1 # at the very least, v1 is known
     if isinstance(v1,str) and isinstance(v2,str):
@@ -453,7 +462,6 @@ def fastdiv(m,data,details, focus):
     a   = dist(m,i, west, focus)
     b   = dist(m,i, east, focus)
     i.x = (a*a + c*c - b*b)/(2*c + 0.0001) # cosine rule
-    print "a",a,"b",b,"c",c,"x",i.x
   data = sorted(data,key=lambda i: i.x)
   n    = len(data)/2
   details.also(west=west, east=east, c=c, cut=data[n].x)
@@ -499,27 +507,40 @@ def chunk(m,data,slots=None, lvl=0,up=None):
     show("")
     wests,easts = fastdiv(m,data,tree,slots.focus)
     if not worse(wests, easts, tree) :
-      tree._left = chunk(m,wests, slots, lvl+1, tree)
+      tree._left = chunk(m,wests,slots,lvl+1,tree)
     if not worse(easts, wests, tree) :
-      tree._right = chunk(m,easts, slots, lvl+1, tree)
+      tree._right = chunk(m,easts,slots,lvl+1,tree)
   return tree
 
 def worse(down1,down2,here): return False
 
-def neighbors(m,datum,tree,focus):
-  if not tree._left and not tree._right:
-    return tree
-  if not tree._right:
-    return neighbors(m, datum, tree._left, focus)
-  if not tree._left:
-    return neighbors(m, datum, tree._right, focus)
-  a   = dist(m,datum, tree.west, focus)
-  b   = dist(m,datum, tree.east, focus)
-  c   = tree.c
-  x   = (a*a + c*c - b*b)*1.0/(2*c + 0.0001) 
-  print "a",a,"b",b,"c",c,"x",x
-  kid = tree._left if x < tree.cut else tree._right
-  return neighbors(m,datum,kid,focus)
+def neighbors(m,this,tree,focus):
+  def recurse(z):
+    return neighbors(m, this, z, focus)
+  left, right = tree._left, tree._right
+  if not left and not right : return tree
+  elif not right            : return recurse(left) 
+  elif not left             : return recurse(right)
+  else:
+    a = dist(m, this, tree.west, focus)
+    b = dist(m, this, tree.east, focus)
+    c = tree.c
+    x = (a*a + c*c - b*b)*1.0/(2*c + 0.0001) 
+    return recurse(left if x < tree.cut else right)
+
+def parents(tree):
+  if tree:
+    yield tree
+    for up in parents(tree._up):
+      yield up
+
+def siblings(tree):
+  visited = {tree.id: 1}
+  for up in parents(tree._up):
+    for _,down  in leafs(up):
+      if not down.id in visited:
+        visited[down.id] = 1
+        yield down
 
 # Demos
 
@@ -574,14 +595,20 @@ def _t1(f='data/nasa93a.csv'):
 
 @demo
 def _t2(f='data/nasa93nums.csv'):
-  m    = Table(f)
-  s    = m.slots()
-  sets = settings(verbose=True)
-  tree = chunk(m, s, sets)
-  for _,leaf in leafs(tree): break
-  datum= leaf.value[0]
-  print leaf.id
+  m      = Table(f)
+  s      = m.slots()
+  sets   = settings(verbose=True)
+  tree   = chunk(m, s, sets)
+  _,leaf = any([x for x in leafs(tree)])
+  datum  = any([x for x in leaf.value])
+  print leaf.id, datum.id
   print neighbors(m,datum,tree, sets.focus).id
+  n=0
+  for sib in siblings(leaf):
+    n += 1
+    print n,sib.id
+  for t1 in tables(m.t,tree):
+    print t1
     
 
 The = Slots(normalize=True, missing='?')
