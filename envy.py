@@ -191,6 +191,7 @@ def leafs(t):
     if not node._left and not node._right:
       yield lvl,node
 
+
 # Disk Tables
 
 ## CSV Reader
@@ -452,6 +453,7 @@ def fastdiv(m,data,details, focus):
     a   = dist(m,i, west, focus)
     b   = dist(m,i, east, focus)
     i.x = (a*a + c*c - b*b)/(2*c + 0.0001) # cosine rule
+    print "a",a,"b",b,"c",c,"x",i.x
   data = sorted(data,key=lambda i: i.x)
   n    = len(data)/2
   details.also(west=west, east=east, c=c, cut=data[n].x)
@@ -491,12 +493,11 @@ def chunk(m,data,slots=None, lvl=0,up=None):
       print slots.b4*lvl + str(len(data)) + suffix
   tree= Slots(_up=up,value=None,_left=None,_right=None)
   if tooDeep() or tooFew():
-    show(".")
+    show(" #<-- %s" % tree.id)
     tree.value = data
   else:
     show("")
-    wests,easts = fastdiv(m,data,tree,
-                          slots.focus)
+    wests,easts = fastdiv(m,data,tree,slots.focus)
     if not worse(wests, easts, tree) :
       tree._left = chunk(m,wests, slots, lvl+1, tree)
     if not worse(easts, wests, tree) :
@@ -504,6 +505,21 @@ def chunk(m,data,slots=None, lvl=0,up=None):
   return tree
 
 def worse(down1,down2,here): return False
+
+def neighbors(m,datum,tree,focus):
+  if not tree._left and not tree._right:
+    return tree
+  if not tree._right:
+    return neighbors(m, datum, tree._left, focus)
+  if not tree._left:
+    return neighbors(m, datum, tree._right, focus)
+  a   = dist(m,datum, tree.west, focus)
+  b   = dist(m,datum, tree.east, focus)
+  c   = tree.c
+  x   = (a*a + c*c - b*b)*1.0/(2*c + 0.0001) 
+  print "a",a,"b",b,"c",c,"x",x
+  kid = tree._left if x < tree.cut else tree._right
+  return neighbors(m,datum,kid,focus)
 
 # Demos
 
@@ -551,9 +567,22 @@ def _t1(f='data/nasa93a.csv'):
                settings(verbose=True))
   for _,leaf in leafs(tree):
     print ""
+    print leaf.id
     dittos={}
     align([ditto(r.dec + r.obj,dittos) 
            for r in leaf.value])
+
+@demo
+def _t2(f='data/nasa93nums.csv'):
+  m    = Table(f)
+  s    = m.slots()
+  sets = settings(verbose=True)
+  tree = chunk(m, s, sets)
+  for _,leaf in leafs(tree): break
+  datum= leaf.value[0]
+  print leaf.id
+  print neighbors(m,datum,tree, sets.focus).id
+    
 
 The = Slots(normalize=True, missing='?')
 
