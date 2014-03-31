@@ -61,11 +61,11 @@ BEGIN {
      Color3="f79a32"
 
      Words = "def "      \
-             " for in int if or len  True False str lambda and not "\
+             " for in int if or elif sorted float True False str lambda and not "\
              " class else while print import " \
              " sprintf rand :  switch"          \
              " BEGIN END next continue  "        \
-             " return length "
+             " return len "
      split(Words,Tmp," ")
      for(Word in Tmp) {
         Pat = Pat Sep "\\y" Tmp[Word] "\\y"
