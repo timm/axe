@@ -20,25 +20,27 @@ def interpolate(x, points):
     x1,y1 = x2,y2
   return hi[1]
 
-def zippedFiles(zipfile):
+def zippedFiles(zipped, pattern='*'):
   "Find files in a zip."
-  with zipfile.ZipFile(zipfile,'r') as archive:
+  with zipfile.ZipFile(zipped,'r') as archive:
     for file in archive.namelist():
-      lines = archive.open(file,'r')
-      yield file, lines
+      if fnmatch.fnmatch(file, pattern):
+        lines = archive.open(file,'r')
+        yield file, lines
 
-def files(pattern):
+def files(dir='.', pattern='*'):
   "Find files in a directory tree."
-  for path, subdirs, files in os.walk('.'):
+  for path, subdirs, files in os.walk(dir):
     for name in files:
       if fnmatch.fnmatch(name, pattern):
         file = path + '/' + name
         lines = open(os.path.join(path, name))
-        return file, lines
+        yield file, lines
 
 def namedCells(source, contents=files):
   "Return cells, with header info from line1."
   for file,lines in contents(source):
+    print file
     names = None
     for line in lines:
       cells = values(line)
@@ -62,6 +64,7 @@ def wantgot(source,compare=ar, contents=files):
 class Nums():
   def __init__(i,some=[]):
     i.n = i.mu = i.m2 = i.s = 0.0; i.all=[]
+    i.win = i.loss = i.tie = 0
     for x in some: i % x
   def __mod__(i,x):
     i.all += [x]
@@ -75,8 +78,13 @@ class Nums():
     signal = abs(i.mu - j.mu)*1.0
     noise  = (i.s**2/i.n + j.s**2/j.n)**0.5
     return signal / noise
-  def ttest(i,j,conf=95):
-    return critical(i.n + j.n - 2,conf) < i.t(j)
+  def winLossTie(i,j,conf=95,reverse=False):
+    if critical(i.n + j.n - 2,conf) < i.t(j):
+      i.tie += 1; j.tie += 1
+    else:
+      if reverse:
+        if i.mu > j.mu: i.loss += 1; j.win  += 1
+        else          : i.win  += 1; j.loss += 1
 
 def critical(n, conf=95):
   return interpolate(n,
@@ -112,6 +120,6 @@ def _demo(zipped='data/loo.zip'):
   for k1,v1 in wme.items():
     for k2,v2 in wme.items():
       if k1 > k2:
-        print k1,k2,v1.ttest(v2)
+        True #print k1,k2,v1.ttest(v2)
 
-#_demo()
+_demo()
