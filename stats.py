@@ -46,19 +46,18 @@ def namedCells(source, contents=files):
         names = cells
       else: 
         yield file,zip(names,cells) 
-   
-def wantgot(source,compare=lambda x,y:x - y, 
-            contents=files):
-  "Return cells, compared to values in first col."
-  for file,found in namedCells(source,contents):
-    want = found[0][1]
-    for what,got in found[1:]:
-      yield file, what, compare(want,got)
 
 def ar(want,got)    : return want - got
 def mar(want,got)   : return abs(ar(want,got))
 def relerr(want,got): return (want-got)*1.0/want
 def mre(want,got)   : return abs(relerr(want,got))
+   
+def wantgot(source,compare=ar, contents=files):
+  "Return cells, compared to values in first col."
+  for file,found in namedCells(source,contents):
+    want = found[0][1]
+    for what,got in found[1:]:
+      yield file, what, compare(want,got)
 
 class Nums():
   def __init__(i,some=[]):
