@@ -20,23 +20,25 @@ def interpolate(x, points):
     x1,y1 = x2,y2
   return hi[1]
 
-def zippedFiles(zipped):
+def zippedFiles(zipfile):
   "Find files in a zip."
-  with zipfile.ZipFile(zipped,'r') as archive:
+  with zipfile.ZipFile(zipfile,'r') as archive:
     for file in archive.namelist():
-      yield file,archive.open(file,'r')
+      lines = archive.open(file,'r')
+      yield file, lines
 
 def files(pattern):
   "Find files in a directory tree."
   for path, subdirs, files in os.walk('.'):
     for name in files:
       if fnmatch.fnmatch(name, pattern):
-        yield path + '/' + name,\
-              open(os.path.join(path, name))
+        file = path + '/' + name
+        lines = open(os.path.join(path, name))
+        return file, lines
 
-def namedCells(source, filter=files):
+def namedCells(source, contents=files):
   "Return cells, with header info from line1."
-  for file,lines in filter(source):
+  for file,lines in contents(source):
     names = None
     for line in lines:
       cells = values(line)
@@ -46,9 +48,9 @@ def namedCells(source, filter=files):
         yield file,zip(names,cells) 
    
 def wantgot(source,compare=lambda x,y:x - y, 
-            filter=files):
+            contents=files):
   "Return cells, compared to values in first col."
-  for file,found in namedCells(source,filter):
+  for file,found in namedCells(source,contents):
     want = found[0][1]
     for what,got in found[1:]:
       yield file, what, compare(want,got)
