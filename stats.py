@@ -9,6 +9,9 @@ def values(str,  sep=",",
       except ValueError : return x
   return map(value,re.sub(bad,"",str).split(sep))
 
+def gs(lst):
+  return map(lambda x:eval('%g'%x), lst)
+
 def interpolate(x, points):
   lo, hi = points[0], points[-1]
   x1, y1 = lo[0], lo[1]
@@ -81,10 +84,13 @@ class Nums():
   def winLossTie(i,j,conf=95,reverse=False):
     if critical(i.n + j.n - 2,conf) < i.t(j):
       i.tie += 1; j.tie += 1
+      return False
+    iBest= i.mu < j.mu if reverse else i.mu > j.mu
+    if iBest:
+      i.win += 1; j.loss+= 1
     else:
-      if reverse:
-        if i.mu > j.mu: i.loss += 1; j.win  += 1
-        else          : i.win  += 1; j.loss += 1
+      i.loss+= 1; j.win += 1 
+    return True
 
 def critical(n, conf=95):
   return interpolate(n,
@@ -100,11 +106,11 @@ def critical(n, conf=95):
 def _t():
   one = [105,112,96,124,103,92,97,108,105,110]
   two = [98,108,114,106,117,118,126,116,122,108]
-  for want,fudge in [(False,1.0), (False,1.1), 
-                     (True,1.2),  (True,9.0)]:
+  for want,fudge in [(True,1.0),  (True,1.1), 
+                     (False,1.2), (False,9.0)]:
     t1  = Nums(two)
     t2  = Nums(map(lambda x:x*fudge, one))
-    got = t1.ttest(t2)
+    got = t1.winLossTie(t2)
     print fudge,":testPassed",want == got,\
           "since :want",want,":got",got
 
