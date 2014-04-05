@@ -11,7 +11,7 @@ def values(str,  sep=",",
 
 def interpolate(x, points):
   lo, hi = points[0], points[-1]
-  x1,y1  = lo[0], lo[1]
+  x1, y1 = lo[0], lo[1]
   for x2,y2 in points[1:]:
     if x1 <= x <= x2:
       deltay = y2 - y1
