@@ -1,4 +1,4 @@
-import zipfile,re,os,fnmatch
+import zipfile,re,os,fnmatch,copy
 
 def values(str,  sep=",",
            bad= r'(["\' \t\r\n]|#.*)'):
@@ -11,6 +11,13 @@ def values(str,  sep=",",
 
 def gs(lst):
   return map(lambda x:eval('%g'%x), lst)
+
+class DefaultDict(dict):
+  def __init__(i, default=lambda:[]):
+    i.default = default
+  def __getitem__(i, key):
+    if key in i: return i.get(key)
+    return i.setdefault(key,i.default())
 
 def interpolate(x, points):
   lo, hi = points[0], points[-1]
@@ -50,7 +57,7 @@ def namedCells(source, contents=files):
       if not names: 
         names = cells
       else: 
-        yield file,zip(names,cells) 
+        yield file,zip(names,cells)
 
 def ar(want,got)    : return want - got
 def mar(want,got)   : return abs(ar(want,got))
@@ -81,16 +88,21 @@ class Nums():
     signal = abs(i.mu - j.mu)*1.0
     noise  = (i.s**2/i.n + j.s**2/j.n)**0.5
     return signal / noise
-  def winLossTie(i,j,conf=95,reverse=False):
+  def __lt__(i,j):
+    if i.win  > j.win : return True
+    if i.win == j.win and i.loss < j.loss: 
+      return True
+    return False
+  def winLoss(i,j,conf=95,reverse=False):
     if critical(i.n + j.n - 2,conf) < i.t(j):
       i.tie += 1; j.tie += 1
-      return False
+      return False # no one win or lost
     iBest= i.mu < j.mu if reverse else i.mu > j.mu
     if iBest:
       i.win += 1; j.loss+= 1
     else:
       i.loss+= 1; j.win += 1 
-    return True
+    return True # we have a winner
 
 def critical(n, conf=95):
   return interpolate(n,
@@ -110,22 +122,24 @@ def _t():
                      (False,1.2), (False,9.0)]:
     t1  = Nums(two)
     t2  = Nums(map(lambda x:x*fudge, one))
-    got = t1.winLossTie(t2)
+    got = t1.winLoss(t2)
     print fudge,":testPassed",want == got,\
           "since :want",want,":got",got
 
 _t()
 
 def _demo(zipped='data/loo.zip'):
-  wme = {}
+  wme = DefaultDict(default=lambda :Nums())
   for file,rx,seen in wantgot(zipped,mre,zippedFiles):
     key = rx
-    if not key in wme: 
-      wme[key] = Nums()
     wme[key] % seen
   for k1,v1 in wme.items():
+    v1.name = k1
     for k2,v2 in wme.items():
       if k1 > k2:
-        True #print k1,k2,v1.ttest(v2)
+        v1.winLoss(v2,reverse=True)
+  for v in sorted(wme.values()):
+    print '%3d %3d %3d %s' \
+          % (v.win,v.tie,v.loss,v.name)
 
 _demo()
