@@ -1,4 +1,4 @@
-import zipfile,re,os,fnmatch,copy
+import zipfile,re,os,fnmatch,copy,random
 
 def values(str,  sep=",",
            bad= r'(["\' \t\r\n]|#.*)'):
@@ -71,6 +71,9 @@ def wantgot(source,compare=ar, contents=files):
     for what,got in found[1:]:
       yield file, what, compare(want,got)
 
+def ttest(i,j,conf=95):
+  return critical(i.n + j.n - 2,conf) < i.t(j)
+
 class Nums():
   def __init__(i,some=[]):
     i.n = i.mu = i.m2 = i.s = 0.0; i.all=[]
@@ -93,8 +96,8 @@ class Nums():
     if i.win == j.win and i.loss < j.loss: 
       return True
     return False
-  def winLoss(i,j,conf=95,reverse=False):
-    if critical(i.n + j.n - 2,conf) < i.t(j):
+  def winLoss(i,j,conf=95,reverse=False,same=ttest):
+    if same(i,j,conf=conf):
       i.tie += 1; j.tie += 1
       return False # no one win or lost
     iBest= i.mu < j.mu if reverse else i.mu > j.mu
@@ -115,6 +118,54 @@ def critical(n, conf=95):
                           ( 20,  2.845), (80, 2.64 ),
                           (320,  2.58 ))}[conf])
 
+def bootstrap(y,z,conf=0.05,b=500):
+  """The bootstrap hypothesis test from
+     p220 to 223 of Efron's book 'An
+    introduction to the bootstrap."""
+  def testStatistic(y,z): 
+    """Checks if two means are different, tempered
+     by the sample size of 'y' and 'z'"""
+    s1    = y.s 
+    s2    = z.s 
+    delta = z.mu - y.mu
+    if s1+s2:
+      delta =  delta/((s1/y.n + s2/z.n)**0.5)
+    return delta
+  def one(lst): return lst[ int(any(len(lst))) ]
+  def any(n)  : return random.uniform(0,n)
+  x      = y + z
+  tobs   = testStatistic(y,z)
+  yhat   = [y1 - y.mu + x.mu for y1 in y.all]
+  zhat   = [z1 - z.mu + x.mu for z1 in z.all]
+  bigger = 0.0
+  for i in range(b):
+    if testStatistic(
+      Nums([one(yhat) for _ in yhat]),
+      Nums([one(zhat) for _ in zhat])) > tobs:
+      bigger += 1
+  return bigger / b >= conf
+
+def _bootstrapd(): 
+  random.seed(1)
+  def worker(n=30,mu1=10,sigma1=1,mu2=10.2,sigma2=1):
+    def g(mu,sigma) : return random.gauss(mu,sigma)
+    x = [g(mu1,sigma1) for i in range(n)]
+    y = [g(mu2,sigma2) for i in range(n)]
+    return n,mu1,sigma1,mu2,sigma2,\
+        'same' if bootstrap(Nums(x),Nums(y)) else 'different'
+  print worker(30, 10.1,  1,  10.2, 1)
+  print worker(30, 10.1,  1,  10.8, 1.4)
+  print worker(30, 10.1,  10,  10.7, 1)
+ 
+#real	112m49.771s
+#user	109m36.048s
+#sys	0m8.804s
+
+
+#_bootstrapd()
+
+#quit()
+
 def _t():
   one = [105,112,96,124,103,92,97,108,105,110]
   two = [98,108,114,106,117,118,126,116,122,108]
@@ -126,20 +177,21 @@ def _t():
     print fudge,":testPassed",want == got,\
           "since :want",want,":got",got
 
-_t()
-
-def _demo(zipped='data/loo.zip'):
+def _demo(zipped='data/loo.zip'):  
   wme = DefaultDict(default=lambda :Nums())
   for file,rx,seen in wantgot(zipped,mre,zippedFiles):
     key = rx
     wme[key] % seen
+  print ""
   for k1,v1 in wme.items():
     v1.name = k1
+    print k1
     for k2,v2 in wme.items():
       if k1 > k2:
-        v1.winLoss(v2,reverse=True)
+        print "\t",k2
+        v1.winLoss(v2,reverse=True,same=bootstrap)
   for v in sorted(wme.values()):
     print '%3d %3d %3d %s' \
-          % (v.win,v.tie,v.loss,v.name)
+        % (v.win,v.tie,v.loss,v.name)
 
 _demo()
