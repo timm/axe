@@ -47,7 +47,9 @@ print markdown.Markdown(extensions=['footnotes',
 EOF
 }
 makemd() { cat<<"EOF" > $Tmp/py2md.awk
+/^#aka /                  {Subs[$2] = $3; next}
 /^#</,/^#>/               { next }
+                          {for (Sub in Subs) gsub(Sub,Subs[Sub]) }
 InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
 InQ                       { print $0; next}
 !InQ && gsub(/^""".*/,"") {InQ=1; print "</pre>"; next}
@@ -115,6 +117,6 @@ header $Q
 echo "</head><body>"
 if [[ "$Q" =~ .*py$ ]]
     then $Cat/$Q  | gawk -f $Tmp/py2md.awk
-    else $Cat/$Q.md
+    else $Cat/$Q
 fi | python $Tmp/markup.py
 #echo $Cat/footer.html
