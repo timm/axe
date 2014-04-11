@@ -47,9 +47,10 @@ print markdown.Markdown(extensions=['footnotes',
 EOF
 }
 makemd() { cat<<"EOF" > $Tmp/py2md.awk
-/^#aka /                  {Subs[$2] = $3; next}
+/^#aka /                  { Subs[$2] = $3 }
 /^#</,/^#>/               { next }
-                          {for (Sub in Subs) gsub(Sub,Subs[Sub]) }
+                          { for (Sub in Subs) 
+                               gsub("\y" Sub "\\y",Subs[Sub]) }
 InQ &&  gsub(/^""".*/,"") { InQ = 0; print "<pre>" ; next}
 InQ                       { print $0; next}
 !InQ && gsub(/^""".*/,"") {InQ=1; print "</pre>"; next}
