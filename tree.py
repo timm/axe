@@ -1,7 +1,7 @@
 import re,math
 
 def golf(): return """
-   outlook, temp,humidity,wind,play
+   outlook, $temp,$humidity,wind,play
    overcast, 83, 86, false, yes
    overcast, 64, 65, true, yes
    overcast, 72, 90, true, yes
@@ -47,16 +47,33 @@ class Counts(DefaultDict):
       e -= p*log(p)/log(2)
     return e
 
-class Col:
-  def __init__(i,name):
-    i.name=name
-    i.nump=True
-    i._all=[]
-  def __add__(i,x):
-    i.nump = i.nump and isinstance(x,(float,int))
-    i._all += [x]
-  def __repr__(i):
-    return 'Col'+showd(i)
+class Slots():
+  def __init__(i,**fields) : i.also(fields)
+  def also(i,d)  : i.__dict__.update(d)
+  def __repr_(i) : return showd(i)
+
+class Col(object):
+  def __init__(i,name,pos):
+    i.name, i.pos = name,pos
+    i.where = DefaultDict(default=lambda : [])
+  def seen(i,x,y,at):
+    i.where[(x,at)] += [y]
+    return x
+
+class Num(Col):
+  def __init__(i,name,pos):
+    i._pairs = name,pos,[]
+    
+  def seen(i,z,row) : 
+    i._pairs += [(z,row)]; 
+    return z
+  def __repr__(i) : return 'Num'+showd(i)
+
+class Sym:
+  def __init__(i,name,pos):
+    i.name,i.pos,i.counts = name,pos,Counts()
+  def seen(i,z,row) : i.counts[z] += 1; return z
+  def __repr__(i) : return 'Col'+showd(i)
 
 def rows(f,
          sep=",",
@@ -71,19 +88,28 @@ def rows(f,
     if row:
       yield map(atom,row.split(sep))
 
-def table(rows,t = None):
-  for row in rows:
+def table(lst,t = None):
+  def what(txt,pos): 
+    return (Num if '$' in txt else Sym)(txt,pos)
+  for row in lst:
     if not t:
-      t = [Col(name) for name in row]
+      t = Table(rows = [],
+                cols = [what(txt,pos) for pos,txt
+                        in enumerate(row)])
+      t.dep   = t.cols[-1]
+      t.indep = t.cols[:-1]
+      t.nums  = [c for c in t.indep if type(c)=='Num']
+      t.syms  = [c for c in t.cols  if type(c)!='Num']
     else:
-      for i,cell in enumerate(row):
-        t[i] + cell
+      nth = len(t.rows)
+      row = [col.seen(row[col],nth) for col in t.cols] 
+      t.rows += [row]
   return t
 
 def nchops(t):
-  cols = t[:-1]
-  klass   = t[1]
-  return [nchop(col,klass) for col in cols ]
+  for num in t.nums:
+    t.chops=[]
+    edivnchop(col,klass) for col in cols ]
 
 def chop(col,klass):
   if col.nump: 
@@ -98,19 +124,24 @@ def ediv(pairs,cuts):
     ediv(pairs[cut:],cuts)
   return cuts
 
-def ecut(above,min=2):
-  right    = Counts([x for (_,x) in above]))
-  least, n = right.ent(), len(right)*1.0
-  cut,left = None,Counts() 
-  for j,(num,k) in enumerate(above):
-    right[k] -= 1
-    left[k]  += 1
+def leftRight(all):
+  right = Counts(x for (_,x) in all)
+  left  = Counts()
+  for j,(num,klass) in enumerate(all):
+    right[klass] -= 1
+    left[klass]  += 1
+    yield j,left,right
+
+def ecut(all,min=2):
+  least, n = all.ent(), len(all)*1.0
+  cut,lefts,rights  = None,None,None
+  for j,left,right in leftRight(all):
     n1,n2 = len(left), len(right)
     if n1 > min and n2 > min:
       tmp = n1/n*left.ent() + n2/n*right.ent()
       if tmp < least :
-        cut,least = j,tmp
-  return cut
+        cut,least,lefts,rights = j,tmp,left,right
+  return cut,left,right
 
 print table(rows(golf))
 
