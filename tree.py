@@ -19,13 +19,15 @@ def golf(): return """
    """
 
 def showd(d):
-  """Catch key values to string, sorted on keys.
+  """Catch key values to string, sorted on keys. 
      Ignore hard to read items (marked with '_')."""
-  d = d if  isinstance(d,dict) else d.__dict__
-  return '{'+ ' '.join([':%s %s' % (k,v)
-                        for k,v in
-                        sorted(d.items())
-                        if not "_" in k]) + '}'
+  name=''
+  if not isinstance(d,dict):
+    name = d.__class__.__name__
+    d    = d.__dict__
+  return name + '{'+ ' '.join([':%s %s' % (k,v)
+            for k,v in sorted(d.items())
+            if not "_" in k]) + '}'
 
 class DefaultDict(dict):
   def __init__(i, default=lambda:[]):
@@ -47,33 +49,33 @@ class Counts(DefaultDict):
       e -= p*log(p)/log(2)
     return e
 
-class Slots():
-  def __init__(i,**fields) : i.also(fields)
-  def also(i,d)  : i.__dict__.update(d)
-  def __repr_(i) : return showd(i)
+class Bag():
+  id = -1
+  def __init__(i,**fields) : 
+    i.override(fields)
+    i.id = Bag.id = Bag.id + 1
+  def also(i,**d)   : i.override(d) 
+  def override(i,d) : i.__dict__.update(d)
+  def __repr__(i)   : return showd(i)
 
 class Col(object):
   def __init__(i,name,pos):
     i.name, i.pos = name,pos
-    i.where = DefaultDict(default=lambda : [])
-  def seen(i,x,y,at):
-    i.where[(x,at)] += [y]
+    i._where = DefaultDict(default=lambda:[])
+  def seen(i,x,at):
+    i._where[x] += [at]
     return x
+  def __repr__(i) : return showd(i)
 
-class Num(Col):
+class Num(Col): pass
+ 
+class Sym(Col):
   def __init__(i,name,pos):
-    i._pairs = name,pos,[]
-    
-  def seen(i,z,row) : 
-    i._pairs += [(z,row)]; 
-    return z
-  def __repr__(i) : return 'Num'+showd(i)
-
-class Sym:
-  def __init__(i,name,pos):
-    i.name,i.pos,i.counts = name,pos,Counts()
-  def seen(i,z,row) : i.counts[z] += 1; return z
-  def __repr__(i) : return 'Col'+showd(i)
+    super(Sym,i).__init__(name,pos)
+    i.counts = Counts()
+  def seen(i,x,at) : 
+    i.counts[x] += 1; 
+    return super(Sym,i).seen(x,at) 
 
 def rows(f,
          sep=",",
@@ -88,60 +90,72 @@ def rows(f,
     if row:
       yield map(atom,row.split(sep))
 
-def table(lst,t = None):
-  def what(txt,pos): 
-    return (Num if '$' in txt else Sym)(txt,pos)
-  for row in lst:
-    if not t:
-      t = Table(rows = [],
-                cols = [what(txt,pos) for pos,txt
-                        in enumerate(row)])
-      t.dep   = t.cols[-1]
-      t.indep = t.cols[:-1]
-      t.nums  = [c for c in t.indep if type(c)=='Num']
-      t.syms  = [c for c in t.cols  if type(c)!='Num']
-    else:
-      nth = len(t.rows)
-      row = [col.seen(row[col],nth) for col in t.cols] 
-      t.rows += [row]
+def newTable(cells):
+  def what(txt,j): 
+    klass = Num if '$' in txt else Sym
+    return klass(txt,j)
+  def nump(x):
+    return isinstance(x,(float,int))
+  t = Bag(rows = [],
+          cols = [what(txt,pos) for pos,txt
+                  in enumerate(cells)])
+  t.dep   = t.cols[-1]
+  t.indep = t.cols[:-1]
+  t.nums  = [c for c in t.indep if nump(c)]
+  t.syms  = [c for c in t.cols  if not nump(c)]
   return t
 
-def nchops(t):
-  for num in t.nums:
-    t.chops=[]
-    edivnchop(col,klass) for col in cols ]
+def newRow(t,cells):
+  row = Bag(of = t)
+  row.cells = [col.seen(cells[col.pos],row) 
+               for col in t.cols] 
+  t.rows += [row]
+  return t
 
-def chop(col,klass):
-  if col.nump: 
-   col.cuts = ediv(sorted(zip(col._all,klass._all)),[])
-  return col
+def table(lst,t = None):
+  for cells in lst:
+    if t : newRow(t,cells)
+    else : t = newTable(cells)
+  return t
 
-def ediv(pairs,cuts):
-  cut = ecut(pairs)
-  if cut:
-    cuts += [cut]
-    ediv(pairs[:cut],cuts)
-    ediv(pairs[cut:],cuts)
-  return cuts
+# def nchops(t):
+#   for num in t.nums:
+#     t.chops=[]
+#     ediv(
+# (col,klass) for col in cols ]
 
-def leftRight(all):
-  right = Counts(x for (_,x) in all)
-  left  = Counts()
-  for j,(num,klass) in enumerate(all):
-    right[klass] -= 1
-    left[klass]  += 1
-    yield j,left,right
+# def chop(col,klass):
+#   if col.nump: 
+#    col.cuts = ediv(sorted(zip(col._all,klass._all)),[])
+#   return col
 
-def ecut(all,min=2):
-  least, n = all.ent(), len(all)*1.0
-  cut,lefts,rights  = None,None,None
-  for j,left,right in leftRight(all):
-    n1,n2 = len(left), len(right)
-    if n1 > min and n2 > min:
-      tmp = n1/n*left.ent() + n2/n*right.ent()
-      if tmp < least :
-        cut,least,lefts,rights = j,tmp,left,right
-  return cut,left,right
+# def ediv(pairs,cuts):
+#   cut = ecut(pairs)
+#   if cut:
+#     cuts += [cut]
+#     ediv(pairs[:cut],cuts)
+#     ediv(pairs[cut:],cuts
+#   return cuts
 
-print table(rows(golf))
+# def leftRight(all):
+#   right = Counts(x for (_,x) in all)
+#   left  = Counts()
+#   for j,(num,klass) in enumerate(all):
+#     right[klass] -= 1
+#     left[klass]  += 1
+#     yield j,left,right
+
+# def ecut(all,min=2):
+#   least, n = all.ent(), len(all)*1.0
+#   cut,lefts,rights  = None,None,None
+#   for j,left,right in leftRight(all):
+#     n1,n2 = len(left), len(right)
+#     if n1 > min and n2 > min:
+#       tmp = n1/n*left.ent() + n2/n*right.ent()
+#       if tmp < least :
+#         cut,least,lefts,rights = j,tmp,left,right
+#   return cut,left,right
+
+for row in table(rows(golf)).rows:
+  print "\n",row
 
