@@ -1,6 +1,6 @@
 """
 #<
-rdiv: entropy-based division of numerics
+ediv: entropy-based division of numerics
 Copyright (c) 2014, Tim Menzies, tim.menzies@gmail.com
 All rights reserved.  
   
@@ -92,7 +92,7 @@ def ecut(pairs,(num,sym),min=3):
     left  + sym(x)    
   return cut,least
 
-def _ecut():
+def _ediv():
   "Demo code to test the above."
   def first(x) : return x[0]
   def second(x) : return x[1]
@@ -108,7 +108,7 @@ def _ecut():
       (72,X),(72,Y),(75,X),(75,X),
       (80,Y),(81,Y),(83,Y),(85,Y)])
 
-_ecut()
+_ediv()
 
 """
 Output:
