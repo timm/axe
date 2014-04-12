@@ -3,25 +3,27 @@ sys.dont_write_bytecode = True
 log=math.log
 
 class Counts():
+  "Place to add/delete counts of symbols."
   def __init__(i,inits=[]):
     i.n = 0
     i.cache = {}
-    for x in inits:  i + x
+    for symbol in inits:  i + symbol
   def __add__(i,x) :
     i.n += 1
-    i.cache[x] = i.cache.get(x,0) + 1
-  def __sub__(i,x) : 
+    i.cache[symbol] = i.cache.get(symbol,0) + 1
+  def __sub__(i,symbol) : 
     i.n -= 1
-    i.cache[x] = i.cache.get(x,0) - 1
+    i.cache[symbol] = i.cache.get(symbol,0) - 1
   def ent(i):
     e = 0
-    for x in i.cache:
-      p  = i.cache[x]*1.0/i.n
+    for symbol in i.cache:
+      p  = i.cache[symbol]*1.0/i.n
       if p:
         e -= p*log(p)*1.0/log(2)
     return e
 
 def ediv(pairs,gets,cuts):
+  "Divide pairs of (numbers,symbols) using entropy."
   cut,e = ecut(pairs,gets)
   if cut:
     ediv(pairs[:cut], gets, cuts)
@@ -30,13 +32,14 @@ def ediv(pairs,gets,cuts):
     cuts += [(e,pairs)]
   return cuts
  
-def ecut(all,(num,sym),min=3):
+def ecut(pairs,(num,sym),min=3):
+  "Find best place to divide pairs of (num,sym)."
   cut,least= None,None
   left     = Counts()
-  right    = Counts(sym(x) for x in all)
-  n        = len(all) * 1.0
+  right    = Counts(sym(x) for x in pairs)
+  n        = len(pairs) * 1.0
   least    = right.ent()
-  for j,x  in enumerate(all):
+  for j,x  in enumerate(pairs):
     n1,n2 = left.n, right.n
     if n1 > min and n2 > min:
       tmp = n1/n*left.ent() + n2/n*right.ent()
@@ -47,6 +50,7 @@ def ecut(all,(num,sym),min=3):
   return cut,least
 
 def _ecut():
+  "Demo code to test the above."
   def first(x) : return x[0]
   def second(x) : return x[1]
   def go(lst):
