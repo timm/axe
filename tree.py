@@ -77,9 +77,7 @@ class Sym(Col):
     i.counts[x] += 1; 
     return super(Sym,i).seen(x,at) 
 
-def rows(f,
-         sep=",",
-         bad=r'(["\' \t\r\n]|#.*)'): 
+def rows(f, sep=',', bad=r'(["\' \t\r\n]|#.*)'): 
   def atom(x):
     try : return int(x)
     except ValueError:
