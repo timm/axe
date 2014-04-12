@@ -1,4 +1,5 @@
 import re,math
+log=math.log
 
 def golf(): return """
    outlook, $temp,$humidity,wind,play
@@ -29,24 +30,23 @@ def showd(d):
             for k,v in sorted(d.items())
             if not "_" in k]) + '}'
 
-class DefaultDict(dict):
-  def __init__(i, default=lambda:[]):
-    i.default = default
-  def __getitem__(i, key):
-    if key in i: return i.get(key)
-    return i.setdefault(key,i.default())
-
-class Counts(DefaultDict):
+class Counts():
   def __init__(i,inits=[]):
-    i.default = lambda :0
-    for x in inits: i + x
-  def __add__(i,x): i[x] += 1
+    i.n = 0.0
+    i.cache = {}
+    for x in inits:  i + x
+  def __add__(i,x) :
+    i.n += 1
+    i.cache[x] = i.cache.get(x,0) + 1
+  def __sub__(i,x) : 
+    i.n -= 1
+    i.cache[x] = i.cache.get(x,0) - 1
   def ent(i):
     e = 0
-    n = 1.0*len(i)
-    for x in i:
-      p = i[x]/n
-      e -= p*log(p)/log(2)
+    for x in i.cache:
+      p  = i.cache[x]*1.0/i.n
+      if p:
+        e -= p*log(p)/log(2)
     return e
 
 class Bag():
@@ -61,53 +61,62 @@ class Bag():
 class Col(object):
   def __init__(i,name,pos):
     i.name, i.pos = name,pos
-    i._where = DefaultDict(default=lambda:[])
-  def seen(i,x,at):
-    i._where[x] += [at]
-    return x
   def __repr__(i) : return showd(i)
 
-class Num(Col): pass
- 
+class Num(Col):
+  def __init__(i,name,pos):
+    super(Num,i).__init__(name,pos)
+    i._at = []
+  def seen(i,x,at):
+    i._at += [(x,at)]
+    
 class Sym(Col):
   def __init__(i,name,pos):
     super(Sym,i).__init__(name,pos)
-    i.counts = Counts()
+    i._where, i.counts = {}, Counts()
   def seen(i,x,at) : 
     i.counts[x] += 1; 
-    return super(Sym,i).seen(x,at) 
+    if x in i._where: 
+      i._where[x] += [at]
+    else:
+      i._where[x] = [at]
+    return x
 
-def rows(f, sep=',', bad=r'(["\' \t\r\n]|#.*)'): 
+def atoms(str,sep=',', bad=r'(["\' \t\r\n]|#.*)'):
   def atom(x):
     try : return int(x)
     except ValueError:
       try : return float(x)
       except ValueError: return x 
-  for row in f().splitlines():
-    row = re.sub(bad,"",row)
+  str = re.sub(bad,"",str)
+  if str:
+    return map(atom,str.split(sep))
+  
+def rows(f): 
+  for line in f().splitlines():
+    row = atoms(line)
     if row:
-      yield map(atom,row.split(sep))
+      yield row
 
 def newTable(cells):
   def what(txt,j): 
     klass = Num if '$' in txt else Sym
     return klass(txt,j)
   def nump(x):
-    return isinstance(x,(float,int))
-  t = Bag(rows = [],
+    return isinstance(x,Num)
+  t = Bag(_rows = [],
           cols = [what(txt,pos) for pos,txt
                   in enumerate(cells)])
   t.dep   = t.cols[-1]
   t.indep = t.cols[:-1]
   t.nums  = [c for c in t.indep if nump(c)]
-  t.syms  = [c for c in t.cols  if not nump(c)]
   return t
 
 def newRow(t,cells):
   row = Bag(of = t)
   row.cells = [col.seen(cells[col.pos],row) 
                for col in t.cols] 
-  t.rows += [row]
+  t._rows += [row]
   return t
 
 def table(lst,t = None):
@@ -116,44 +125,11 @@ def table(lst,t = None):
     else : t = newTable(cells)
   return t
 
-# def nchops(t):
-#   for num in t.nums:
-#     t.chops=[]
-#     ediv(
-# (col,klass) for col in cols ]
+def nchops(t, num = lambda x: x[0],
+              sym = lambda x: x[1].cells[0]):
+  for col in t.nums:
+    col.cuts = ediv(sorted(col._at),
+                    (num,sym),
+                    [])
 
-# def chop(col,klass):
-#   if col.nump: 
-#    col.cuts = ediv(sorted(zip(col._all,klass._all)),[])
-#   return col
-
-# def ediv(pairs,cuts):
-#   cut = ecut(pairs)
-#   if cut:
-#     cuts += [cut]
-#     ediv(pairs[:cut],cuts)
-#     ediv(pairs[cut:],cuts
-#   return cuts
-
-# def leftRight(all):
-#   right = Counts(x for (_,x) in all)
-#   left  = Counts()
-#   for j,(num,klass) in enumerate(all):
-#     right[klass] -= 1
-#     left[klass]  += 1
-#     yield j,left,right
-
-# def ecut(all,min=2):
-#   least, n = all.ent(), len(all)*1.0
-#   cut,lefts,rights  = None,None,None
-#   for j,left,right in leftRight(all):
-#     n1,n2 = len(left), len(right)
-#     if n1 > min and n2 > min:
-#       tmp = n1/n*left.ent() + n2/n*right.ent()
-#       if tmp < least :
-#         cut,least,lefts,rights = j,tmp,left,right
-#   return cut,left,right
-
-for row in table(rows(golf)).rows:
-  print "\n",row
-
+ 
