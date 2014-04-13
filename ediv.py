@@ -49,9 +49,9 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import sys,math,random
 sys.dont_write_bytecode = True
-log=math.log
-bell=random.gauss
-seed=random.seed
+log = math.log
+bell= random.gauss
+seed= random.seed
 
 def log2(x) : return log(x,2)
 
