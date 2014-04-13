@@ -55,7 +55,7 @@ def ediv(pairs,num= lambda x:x[0],
   "Divide pairs of (numbers,symbols) using entropy."
   import math
   def log2(x) : return math.log(x,2)
-  #-----------------------
+  #---------------------------------
   class Counts():
     "Place to add/delete counts of symbols."
     def __init__(i,inits=[]):
@@ -77,7 +77,7 @@ def ediv(pairs,num= lambda x:x[0],
           p  = i.cache[symbol]*1.0/i.n
           if p: i._e -= p*log2(p)*1.0
       return i._e
-  #-----------------------
+  #------------------------
   def recurse(pairs):
     cut,e = ecut(pairs,sym)
     if cut:
@@ -86,7 +86,7 @@ def ediv(pairs,num= lambda x:x[0],
     else:
       cuts.append((e,pairs))
     return cuts
-  #-----------------------
+  #-------------------------
   def ecut(pairs,sym):
     "Find best place to divide pairs of (num,sym)."
     lhs = Counts()
@@ -103,7 +103,7 @@ def ediv(pairs,num= lambda x:x[0],
       rhs - sym(x)
       lhs + sym(x)    
     return cut,min
-  #---| main |--------------------
+  #---| main |----
   cuts = []
   if pairs:
     return recurse(sorted(pairs,key=num))
