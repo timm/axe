@@ -60,9 +60,9 @@ class Counts():
   def __init__(i,inits=[]):
     i.n, i._e = 0, None
     i.cache = {}
-    for symbol in inits:  i + symbol
-  def __add__(i,symbol) : i.inc(symbol,  1)
-  def __sub__(i,symbol) : i.inc(symbol, -1)
+    for symbol in inits: i + symbol
+  def __add__(i,symbol): i.inc(symbol,  1)
+  def __sub__(i,symbol): i.inc(symbol, -1)
   def inc(i,symbol,n=1):
     i._e = None
     i.n += n
