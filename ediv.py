@@ -55,22 +55,21 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
   import math
   def log2(x) : return math.log(x,2)
   #---------------------------------
-  class Counts():
-    "Place to add/delete counts of symbols."
+  class Counts(): # Add/delete counts of symbols.
     def __init__(i,inits=[]):
       i.n, i._e = 0, None
       i.cache = {}
       for symbol in inits: i + symbol
     def __add__(i,symbol): i.inc(symbol,  1)
     def __sub__(i,symbol): i.inc(symbol, -1)
-    def inc(i,symbol,n=1):
+    def inc(i,symbol,n=1): 
       i._e = None
       i.n += n
       i.cache[symbol] = i.cache.get(symbol,0) + n
-    def k(i) : return len(i.cache.keys())
-    def ke(i): return i.k()*i.ent()
-    def ent(i):
-      if i._e == None:
+    def k(i)  : return len(i.cache.keys())
+    def ke(i) : return i.k()*i.ent()
+    def ent(i): 
+      if i._e == None: 
         i._e = 0
         for symbol in i.cache:
           p  = i.cache[symbol]*1.0/i.n
@@ -79,24 +78,22 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
   #------------------------
   def recurse(lst):
     cut,e = ecut(lst,sym)
-    if cut:
+    if cut: 
       recurse(lst[:cut])
       recurse(lst[cut:])
-    else:
+    else:   
       cuts.append((e,lst))
     return cuts
   #-------------------------
-  def ecut(lst,sym):
-    "Find best place to divide lst of (num,sym)."
-    lhs = Counts()
-    rhs = Counts(sym(x) for x in lst)
-    k, e, ke    = rhs.k(), rhs.ent(), rhs.ke()
-    cut, min, n = None, e, len(lst)*1.0
+  def ecut(lst,sym): # Find best division of lst.
+    lhs,rhs   = Counts(), Counts(sym(x) for x in lst)
+    k, e, ke  = rhs.k(), rhs.ent(), rhs.ke()
+    cut,min,n = None, e, len(lst)*1.0
     for j,x  in enumerate(lst):
       maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
       if maybe < min :  
         gain  = e - maybe
-        delta = log2(3**k- 2)- (ke- rhs.ke()- lhs.ke())
+        delta = log2(3**k-2)- (ke- rhs.ke()-lhs.ke())
         if gain >= (log2(n-1) + delta)/n: 
           cut,min = j,maybe
       rhs - sym(x)
@@ -104,7 +101,7 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
     return cut,min
   #---| main |----
   cuts = []
-  if lst:
+  if lst: 
     return recurse(sorted(lst,key=num))
 
 def _ediv():
