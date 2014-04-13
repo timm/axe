@@ -30,7 +30,7 @@ def ediv(lst, tiny=2,
           if p: i._e -= p*log2(p)*1.0
       return i._e
   #----------------------------------------------
-  def ecut(this): # Find best divide of 'this' lst.
+  def divide(this): # Find best divide of 'this' lst.
     def ke(z): return z.k()*z.ent()
     lhs,rhs   = Counts(),Counts(sym(x) for x in this)
     n0,k0,e0,ke0= 1.0*rhs.n,rhs.k(),rhs.ent(),ke(rhs)
@@ -48,7 +48,7 @@ def ediv(lst, tiny=2,
     return cut,least
   #----------------------------------------------
   def recurse(this, cuts):
-    cut,e = ecut(this)
+    cut,e = divide(this)
     if cut: 
       recurse(this[:cut], cuts)
       recurse(this[cut:], cuts)
