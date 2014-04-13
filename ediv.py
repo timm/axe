@@ -20,7 +20,13 @@ All rights reserved.
    `|:_ :                                |         |
      \: |                                |         |
       \:|                                |         | cjr
-       ~                                             """ 
+       ~                                             
+
+This code implements the Fayyad and Irani MDL discretizer of
+numerics as described in Supervised and Unsupervised
+Discretization of Continuous Features, James Dougherty, Ron
+Kohavi, Mehran Sahami, ICML'95
+""" 
 
 import sys,random
 sys.dont_write_bytecode = True
