@@ -13,8 +13,7 @@ def ediv(lst, tiny=2,
   #----------------------------------------------
   class Counts(): # Add/delete counts of symbols.
     def __init__(i,inits=[]):
-      i.n, i._e = 0, None
-      i.cache = {}
+      i.n, i._e, i.cache  = 0, None, {}
       for symbol in inits: i + symbol
     def __add__(i,symbol): i.inc(symbol,  1)
     def __sub__(i,symbol): i.inc(symbol, -1)
