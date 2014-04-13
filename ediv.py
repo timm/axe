@@ -94,11 +94,10 @@ def ediv(pairs,num,sym):
 
 def ecut(pairs,num,sym):
   "Find best place to divide pairs of (num,sym)."
-  n   = len(pairs) * 1.0
   lhs = Counts()
   rhs = Counts(sym(x) for x in pairs)
-  k, e, ke = rhs.k(), rhs.ent(), rhs.ke()
-  cut,min  = None,e
+  k, e, ke    = rhs.k(), rhs.ent(), rhs.ke()
+  cut, min, n = None, e, len(pairs)*1.0
   for j,x  in enumerate(pairs):
     maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
     if maybe < min :  
