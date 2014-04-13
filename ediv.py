@@ -1,7 +1,8 @@
-#ediv: entropy-based division of numerics .
-#Copyright (c) 2014, Tim Menzies, tim.menzies@gmail.com
-#All rights reserved. 
-"""   _____                                _______
+"""
+ediv: entropy-based division of numerics .
+Copyright (c) 2014, Tim Menzies, tim.menzies@gmail.com
+All rights reserved. 
+      _____                                _______
     ,/_    ``-._                          /       \ 
    ,|:          `'-..__               ___|         |_
   ,|:_                 ``'''-----''''`_::~-.......-'~\ 
@@ -18,11 +19,8 @@
   `|:_   /                               |         |
    `|:_ :                                |         |
      \: |                                |         |
-      \:|                                |         |
-       ~
-                       norse viking axe
-                          cjr4may99
-""" 
+      \:|                                |         | cjr
+       ~                                             """ 
 
 import sys,random
 sys.dont_write_bytecode = True
