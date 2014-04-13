@@ -50,7 +50,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys,random
 sys.dont_write_bytecode = True
 
-def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
+def ediv(lst, tiny=2,
+         num=lambda x:x[0], sym=lambda x:x[1]):
   "Divide lst of (numbers,symbols) using entropy."
   import math
   def log2(x) : return math.log(x,2)
@@ -66,8 +67,7 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
       i._e = None
       i.n += n
       i.cache[symbol] = i.cache.get(symbol,0) + n
-    def k(i)  : return len(i.cache.keys())
-    def ke(i) : return i.k()*i.ent()
+    def k(i): return len(i.cache.keys())
     def ent(i): 
       if i._e == None: 
         i._e = 0
@@ -76,33 +76,34 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
           if p: i._e -= p*log2(p)*1.0
       return i._e
   #----------------------------------------------
-  def recurse(lst):
-    cut,e = ecut(lst,sym)
-    if cut: 
-      recurse(lst[:cut])
-      recurse(lst[cut:])
-    else:   
-      cuts.append((e,lst))
-    return cuts
-  #----------------------------------------------
-  def ecut(lst,sym): # Find best division of lst.
-    lhs,rhs   = Counts(), Counts(sym(x) for x in lst)
-    k, e, ke  = rhs.k(), rhs.ent(), rhs.ke()
-    cut,min,n = None, e, len(lst)*1.0
-    for j,x  in enumerate(lst):
-      maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
-      if maybe < min :  
-        gain  = e - maybe
-        delta = log2(3**k-2)- (ke- rhs.ke()-lhs.ke())
-        if gain >= (log2(n-1) + delta)/n: 
-          cut,min = j,maybe
+  def ecut(this): # Find best divide of 'this' lst.
+    def ke(z): return z.k()*z.ent()
+    lhs,rhs   = Counts(),Counts(sym(x) for x in this)
+    k0,e0,ke0 = rhs.k(), rhs.ent(), ke(rhs)
+    cut,min,n0= None, e0, len(this)*1.0
+    for j,x  in enumerate(this): 
+      if lhs.n > tiny and rhs.n > tiny: 
+        maybe= lhs.n/n0*lhs.ent()+ rhs.n/n0*rhs.ent()
+        if maybe < min :  
+          gain = e0 - maybe
+          delta= log2(3**k0-2)-(ke0- ke(rhs)-ke(lhs))
+          if gain >= (log2(n0-1) + delta)/n0: 
+            cut,min = j,maybe
       rhs - sym(x)
       lhs + sym(x)    
     return cut,min
-  #---| main |----
-  cuts = []
+  #----------------------------------------------
+  def recurse(this, cuts):
+    cut,e = ecut(this)
+    if cut: 
+      recurse(this[:cut], cuts)
+      recurse(this[cut:], cuts)
+    else:   
+      cuts += [(e,this)]
+    return cuts
+  #---| main |-----------------------------------
   if lst: 
-    return recurse(sorted(lst,key=num))
+    return recurse(sorted(lst,key=num),[])
 
 def _ediv():
   "Demo code to test the above."
@@ -114,8 +115,11 @@ def _ediv():
     for d in  ediv(lst):
       print d[1][0][0]
   X,Y="X","Y"
-  go([(1,X),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)])
-  go([(1,Y),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)])
+  l=[(1,X),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)]
+  go(l)
+  l[0] = (1,Y)
+  go(l)
+  go(l*2)
   go([(1,X),(2,X),(3,X),(4,X),(11,X),(12,X),(13,X),(14,X)])
   go([(64,X),(65,Y),(68,X),(69,Y),(70,X),(71,Y),
       (72,X),(72,Y),(75,X),(75,X),
@@ -141,19 +145,23 @@ Output:
  (11, 'Y'), (12, 'Y'), (13, 'Y'), (14, 'Y')]
 1
 
+[(1, 'Y'), (2, 'X'), (3, 'X'), (4, 'X'), 
+ (11, 'Y'), (12, 'Y'), (13, 'Y'), (14, 'Y'), (1, 'Y'), (2, 'X')]
+1
+11
+
 [(1, 'X'), (2, 'X'), (3, 'X'), (4, 'X'), 
  (11, 'X'), (12, 'X'), (13, 'X'), (14, 'X')]
 1
 
-[(64, 'X'), (65, 'Y'), (68, 'X'), (69, 'Y'), 
- (70, 'X'), (71, 'Y'), (72, 'X'), (72, 'Y'), 
- (75, 'X'), (75, 'X')]
+[(64, 'X'), (65, 'Y'), (68, 'X'), (69, 'Y'), (70, 'X'),
+ (71, 'Y'), (72, 'X'), (72, 'Y'), (75, 'X'), (75, 'X')]
 64
 
 [(21.288184753155463, 'X'), (11.44944560869977, 'Y'), 
  (30.066335808938263, 'Z'), (39.23545634902837, 'W'), 
- (18.90782678489586, 'X'), (10.031334516831716, 'Y'),
-  (28.977896829989128, 'Z'), (38.56317055489747, 'W'), 
+ (18.90782678489586, 'X'), (10.031334516831716, 'Y'), 
+ (28.977896829989128, 'Z'), (38.56317055489747, 'W'), 
  (20.199311976483752, 'X'), (10.133374604658606, 'Y')]
 6.90037812106
 16.907507693
@@ -162,4 +170,6 @@ Output:
 
 [(1, 'X')]
 1
+
+
 """
