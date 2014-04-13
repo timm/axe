@@ -66,19 +66,19 @@ def ediv(lst, tiny=2,
   def ecut(this): # Find best divide of 'this' lst.
     def ke(z): return z.k()*z.ent()
     lhs,rhs   = Counts(),Counts(sym(x) for x in this)
-    k0,e0,ke0 = rhs.k(), rhs.ent(), ke(rhs)
-    cut,min,n0= None, e0, rhs.n*1.0
+    n0,k0,e0,ke0 = rhs.n, rhs.k(), rhs.ent(), ke(rhs)
+    cut, least   = None, e0
     for j,x  in enumerate(this): 
       if lhs.n > tiny and rhs.n > tiny: 
         maybe= lhs.n/n0*lhs.ent()+ rhs.n/n0*rhs.ent()
-        if maybe < min :  
+        if maybe < least :  
           gain = e0 - maybe
           delta= log2(3**k0-2)-(ke0- ke(rhs)-ke(lhs))
           if gain >= (log2(n0-1) + delta)/n0: 
-            cut,min = j,maybe
+            cut,least = j,maybe
       rhs - sym(x)
       lhs + sym(x)    
-    return cut,min
+    return cut,least
   #----------------------------------------------
   def recurse(this, cuts):
     cut,e = ecut(this)
