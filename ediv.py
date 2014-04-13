@@ -81,7 +81,7 @@ class Counts():
 def ediv(pairs,num,sym):
   "Divide pairs of (numbers,symbols) using entropy."
   def recurse(pairs):
-    cut,e = ecut(pairs,num,sym)
+    cut,e = ecut(pairs,sym)
     if cut:
       recurse(pairs[:cut])
       recurse(pairs[cut:])
@@ -92,7 +92,7 @@ def ediv(pairs,num,sym):
   if pairs:
     return recurse(sorted(pairs,key=num))
 
-def ecut(pairs,num,sym):
+def ecut(pairs,sym):
   "Find best place to divide pairs of (num,sym)."
   lhs = Counts()
   rhs = Counts(sym(x) for x in pairs)
