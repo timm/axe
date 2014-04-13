@@ -67,7 +67,7 @@ def ediv(lst, tiny=2,
     def ke(z): return z.k()*z.ent()
     lhs,rhs   = Counts(),Counts(sym(x) for x in this)
     k0,e0,ke0 = rhs.k(), rhs.ent(), ke(rhs)
-    cut,min,n0= None, e0, len(this)*1.0
+    cut,min,n0= None, e0, rhs.n*1.0
     for j,x  in enumerate(this): 
       if lhs.n > tiny and rhs.n > tiny: 
         maybe= lhs.n/n0*lhs.ent()+ rhs.n/n0*rhs.ent()
@@ -118,7 +118,7 @@ def _ediv():
   go(l)
   go([(1,X)])
   
-_ediv()
+if __name__ == '__main__': _ediv()
 
 """
 Output:
