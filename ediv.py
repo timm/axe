@@ -102,8 +102,8 @@ def ecut(pairs,num,sym):
   for j,x  in enumerate(pairs):
     maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
     if maybe < min :  
-      gain = e - maybe
-      delta= log2(3**k-2)- (ke- rhs.ke()- lhs.ke())
+      gain  = e - maybe
+      delta = log2(3**k- 2)- (ke- rhs.ke()- lhs.ke())
       if gain >= (log2(n-1) + delta)/n: 
         cut,min = j,maybe
     rhs - sym(x)
@@ -133,7 +133,6 @@ def _ediv():
   go(l)
   go([(1,X)])
   
-
 _ediv()
 
 """
