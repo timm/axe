@@ -1,4 +1,7 @@
-Axe: some slices of timm's ideas (one idea per file)
+Axe
+====
+
+Some slices of timm's ideas (one idea per file)  
 Copyright (c) 2014 TIm Menzies
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
