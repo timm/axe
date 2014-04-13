@@ -47,39 +47,37 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###################################################
 """
 
-import sys,math,random
+import sys,random
 sys.dont_write_bytecode = True
-log = math.log
-bell= random.gauss
-seed= random.seed
 
-def log2(x) : return log(x,2)
-
-class Counts():
-  "Place to add/delete counts of symbols."
-  def __init__(i,inits=[]):
-    i.n, i._e = 0, None
-    i.cache = {}
-    for symbol in inits: i + symbol
-  def __add__(i,symbol): i.inc(symbol,  1)
-  def __sub__(i,symbol): i.inc(symbol, -1)
-  def inc(i,symbol,n=1):
-    i._e = None
-    i.n += n
-    i.cache[symbol] = i.cache.get(symbol,0) + n
-  def k(i) : return len(i.cache.keys())
-  def ke(i): return i.k()*i.ent()
-  def ent(i):
-    if i._e == None:
-      i._e = 0
-      for symbol in i.cache:
-        p  = i.cache[symbol]*1.0/i.n
-        if p:
-          i._e -= p*log2(p)*1.0
-    return i._e
-
-def ediv(pairs,num,sym):
+def ediv(pairs,num= lambda x:x[0],
+               sym= lambda x:x[1]):
   "Divide pairs of (numbers,symbols) using entropy."
+  import math
+  def log2(x) : return math.log(x,2)
+  #-----------------------
+  class Counts():
+    "Place to add/delete counts of symbols."
+    def __init__(i,inits=[]):
+      i.n, i._e = 0, None
+      i.cache = {}
+      for symbol in inits: i + symbol
+    def __add__(i,symbol): i.inc(symbol,  1)
+    def __sub__(i,symbol): i.inc(symbol, -1)
+    def inc(i,symbol,n=1):
+      i._e = None
+      i.n += n
+      i.cache[symbol] = i.cache.get(symbol,0) + n
+    def k(i) : return len(i.cache.keys())
+    def ke(i): return i.k()*i.ent()
+    def ent(i):
+      if i._e == None:
+        i._e = 0
+        for symbol in i.cache:
+          p  = i.cache[symbol]*1.0/i.n
+          if p: i._e -= p*log2(p)*1.0
+      return i._e
+  #-----------------------
   def recurse(pairs):
     cut,e = ecut(pairs,sym)
     if cut:
@@ -88,35 +86,36 @@ def ediv(pairs,num,sym):
     else:
       cuts.append((e,pairs))
     return cuts
+  #-----------------------
+  def ecut(pairs,sym):
+    "Find best place to divide pairs of (num,sym)."
+    lhs = Counts()
+    rhs = Counts(sym(x) for x in pairs)
+    k, e, ke    = rhs.k(), rhs.ent(), rhs.ke()
+    cut, min, n = None, e, len(pairs)*1.0
+    for j,x  in enumerate(pairs):
+      maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
+      if maybe < min :  
+        gain  = e - maybe
+        delta = log2(3**k- 2)- (ke- rhs.ke()- lhs.ke())
+        if gain >= (log2(n-1) + delta)/n: 
+          cut,min = j,maybe
+      rhs - sym(x)
+      lhs + sym(x)    
+    return cut,min
+  #---| main |--------------------
   cuts = []
   if pairs:
     return recurse(sorted(pairs,key=num))
 
-def ecut(pairs,sym):
-  "Find best place to divide pairs of (num,sym)."
-  lhs = Counts()
-  rhs = Counts(sym(x) for x in pairs)
-  k, e, ke    = rhs.k(), rhs.ent(), rhs.ke()
-  cut, min, n = None, e, len(pairs)*1.0
-  for j,x  in enumerate(pairs):
-    maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
-    if maybe < min :  
-      gain  = e - maybe
-      delta = log2(3**k- 2)- (ke- rhs.ke()- lhs.ke())
-      if gain >= (log2(n-1) + delta)/n: 
-        cut,min = j,maybe
-    rhs - sym(x)
-    lhs + sym(x)    
-  return cut,min
-
 def _ediv():
   "Demo code to test the above."
-  seed(1)
-  def num(x) :  return x[0]
-  def sym(x) : return x[1]
+  import random
+  bell= random.gauss
+  random.seed(1)
   def go(lst):
     print ""; print lst[:10]
-    for d in  ediv(lst,num,sym):
+    for d in  ediv(lst):
       print d[1][0][0]
   X,Y="X","Y"
   go([(1,X),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)])
