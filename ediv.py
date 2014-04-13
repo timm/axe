@@ -50,9 +50,8 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys,random
 sys.dont_write_bytecode = True
 
-def ediv(pairs,num= lambda x:x[0],
-               sym= lambda x:x[1]):
-  "Divide pairs of (numbers,symbols) using entropy."
+def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
+  "Divide lst of (numbers,symbols) using entropy."
   import math
   def log2(x) : return math.log(x,2)
   #---------------------------------
@@ -78,22 +77,22 @@ def ediv(pairs,num= lambda x:x[0],
           if p: i._e -= p*log2(p)*1.0
       return i._e
   #------------------------
-  def recurse(pairs):
-    cut,e = ecut(pairs,sym)
+  def recurse(lst):
+    cut,e = ecut(lst,sym)
     if cut:
-      recurse(pairs[:cut])
-      recurse(pairs[cut:])
+      recurse(lst[:cut])
+      recurse(lst[cut:])
     else:
-      cuts.append((e,pairs))
+      cuts.append((e,lst))
     return cuts
   #-------------------------
-  def ecut(pairs,sym):
-    "Find best place to divide pairs of (num,sym)."
+  def ecut(lst,sym):
+    "Find best place to divide lst of (num,sym)."
     lhs = Counts()
-    rhs = Counts(sym(x) for x in pairs)
+    rhs = Counts(sym(x) for x in lst)
     k, e, ke    = rhs.k(), rhs.ent(), rhs.ke()
-    cut, min, n = None, e, len(pairs)*1.0
-    for j,x  in enumerate(pairs):
+    cut, min, n = None, e, len(lst)*1.0
+    for j,x  in enumerate(lst):
       maybe = lhs.n/n*lhs.ent() + rhs.n/n*rhs.ent()
       if maybe < min :  
         gain  = e - maybe
@@ -105,8 +104,8 @@ def ediv(pairs,num= lambda x:x[0],
     return cut,min
   #---| main |----
   cuts = []
-  if pairs:
-    return recurse(sorted(pairs,key=num))
+  if lst:
+    return recurse(sorted(lst,key=num))
 
 def _ediv():
   "Demo code to test the above."
