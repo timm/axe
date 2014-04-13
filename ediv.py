@@ -54,7 +54,7 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
   "Divide lst of (numbers,symbols) using entropy."
   import math
   def log2(x) : return math.log(x,2)
-  #---------------------------------
+  #----------------------------------------------
   class Counts(): # Add/delete counts of symbols.
     def __init__(i,inits=[]):
       i.n, i._e = 0, None
@@ -75,7 +75,7 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
           p  = i.cache[symbol]*1.0/i.n
           if p: i._e -= p*log2(p)*1.0
       return i._e
-  #------------------------
+  #----------------------------------------------
   def recurse(lst):
     cut,e = ecut(lst,sym)
     if cut: 
@@ -84,7 +84,7 @@ def ediv(lst,num=lambda x:x[0], sym=lambda x:x[1]):
     else:   
       cuts.append((e,lst))
     return cuts
-  #-------------------------
+  #----------------------------------------------
   def ecut(lst,sym): # Find best division of lst.
     lhs,rhs   = Counts(), Counts(sym(x) for x in lst)
     k, e, ke  = rhs.k(), rhs.ent(), rhs.ke()
