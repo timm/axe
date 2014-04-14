@@ -22,6 +22,8 @@ class Counts(): # Add/delete counts of numbers.
 f   = [rand()**2 for _ in range(10)]
 rhs = Counts(f)
 lhs = Counts()
+print f
+
 for i,f1 in enumerate(f):
   lhs + f1
   if lhs.n > 2: 
