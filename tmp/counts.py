@@ -17,12 +17,13 @@ class Counts(): # Add/delete counts of numbers.
       delta = x - i.mu
       i.mu -= delta/(1.0*i.n)
       i.m2 -= delta*(x - i.mu)    
-  def sd(i): return i.m2*1.0/(i.n -1)
+  def sd(i): return (i.m2*1.0/(i.n - 1))**0.5
 
-f   = [rand()**2 for _ in range(10)]
+f   = [0.0439301975,	0.8884841849,	0.315628067,	0.1508688607,	0.7760332984	,
+       0.0808971641,	0.5327312081,	0.5017173954,	0.3727895041	,0.1248002942]
+
 rhs = Counts(f)
 lhs = Counts()
-print f
 
 for i,f1 in enumerate(f):
   lhs + f1
