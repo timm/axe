@@ -19,13 +19,9 @@ class Counts(): # Add/delete counts of numbers.
       i.m2 -= delta*(x - i.mu)    
   def sd(i): return i.m2*1.0/(i.n -1)
 
-f = [rand()**2 for _ in range(10)]
-b = f[::-1]
-
-print f,"\n",b
-
-rhs=Counts(f)
-lhs=Counts()
+f   = [rand()**2 for _ in range(10)]
+rhs = Counts(f)
+lhs = Counts()
 for i,f1 in enumerate(f):
   lhs + f1
   if lhs.n > 2: 
