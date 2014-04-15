@@ -3,7 +3,6 @@ Axe
 
 Some slices of timm's ideas (one idea per file)  
 Copyright (c) 2014 TIm Menzies
-
           _____                                _______
         ,/_    ``-._                          /       \ 
        ,|:          `'-..__               ___|         |_
@@ -22,8 +21,7 @@ Copyright (c) 2014 TIm Menzies
        `|:_ :                                |         |
          \: |                                |         |
           \:|                                |         | cjr
-     
-      ~                                             
+           ~                                             
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
