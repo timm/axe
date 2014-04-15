@@ -27,119 +27,102 @@ All rights reserved.
 import sys,random
 sys.dont_write_bytecode = True
 
-def sdiv(lst, tiny=2,,cohen=0.3,
+def sdiv(lst, tiny=3,cohen=0.3,
          num1=lambda x:x[0], num2=lambda x:x[1]):
   "Divide lst of (num1,num2) using variance of num2."
   #----------------------------------------------
   class Counts(): # Add/delete counts of numbers.
     def __init__(i,inits=[]):
-      i.n = i.mu = i.m2 = 0.0
+      i.zero()
       for number in inits: i + number 
+    def zero(i): i.n = i.mu = i.m2 = 0.0
+    def sd(i)  : 
+      if i.n < 2: return i.mu
+      else:       
+        return (max(0,i.m2)*1.0/(i.n - 1))**0.5
     def __add__(i,x):
       i.n  += 1
       delta = x - i.mu
       i.mu += delta/(1.0*i.n)
       i.m2 += delta*(x - i.mu)
     def __sub__(i,x):
+      if i.n < 2: return i.zero()
       i.n  -= 1
       delta = x - i.mu
-      i.mu -= delta/n
+      i.mu -= delta/(1.0*i.n)
       i.m2 -= delta*(x - i.mu)    
-    def sd(i): return i.m2*1.0/(i.n -1)
   #----------------------------------------------
-  def divide(this): # Find best divide of 'this' lst.
-    lhs,rhs = Counts(),Counts(num2(x) for x in this)
-    n0,sd0  = 1.0*rhs.n, rhs.sd()
-    cut, least  = None, sd0
+  def divide(this,small): #Find best divide of 'this'
+    lhs,rhs = Counts(), Counts(num2(x) for x in this)
+    n0, least, cut = 1.0*rhs.n, rhs.sd(), None
     for j,x  in enumerate(this): 
       if lhs.n > tiny and rhs.n > tiny: 
         maybe= lhs.n/n0*lhs.sd()+ rhs.n/n0*rhs.sd()
         if maybe < least :  
-          if abs(lhs.mu - rhs.mu) >= cohen*sd0:
+          if abs(lhs.mu - rhs.mu) >= small:
             cut,least = j,maybe
       rhs - num2(x)
       lhs + num2(x)    
     return cut,least
   #----------------------------------------------
-  def recurse(this, cuts):
-    cut,e = divide(this)
+  def recurse(this, small,cuts):
+    cut,sd = divide(this,small)
     if cut: 
-      recurse(this[:cut], cuts)
-      recurse(this[cut:], cuts)
+      recurse(this[:cut], small, cuts)
+      recurse(this[cut:], small, cuts)
     else:   
-      cuts += [(e,this)]
+      cuts += [(sd,this)]
     return cuts
   #---| main |-----------------------------------
+  small = Counts(num2(x) for x in lst).sd()*cohen
   if lst: 
-    return recurse(sorted(lst,key=num1),[])
+    return recurse(sorted(lst,key=num1),small,[])
 
 def _sdiv():
   "Demo code to test the above."
   import random
   bell= random.gauss
   random.seed(1)
-  def go(lst):
+  def go(lst,cohen=0.3):
     print ""; print sorted(lst)[:10],"..."
-    for d in  ediv(lst):
-      print d[1][0][0]
-  X,Y="X","Y"
-  l=[(1,X),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)]
-  go(l)
-  l[0] = (1,Y)
-  go(l)
-  go(l*2)
-  go([(1,X),(2,X),(3,X),(4,X),(11,X),(12,X),(13,X),(14,X)])
-  go([(64,X),(65,Y),(68,X),(69,Y),(70,X),(71,Y),
-      (72,X),(72,Y),(75,X),(75,X),
-      (80,Y),(81,Y),(83,Y),(85,Y)]*2)
+    for d in  sdiv(lst,cohen=cohen):
+        print d[1][0][0]
+  l = [ (1,10), (2,11),  (3,12),  (4,13),
+       (20,20),(21,21), (22,22), (23,23), (24,24),
+       (30,30),(31,31), (32,32), (33,33),(34,34)]
+  go(l,cohen=0.3)
+  ten     = lambda: bell(10,2)
+  twenty  = lambda: bell(20,2)
+  thirty  = lambda: bell(30,2)
   l=[]
   for _ in range(1000): 
-    l += [(bell(20,1),  X),(bell(10,1),Y),
-          (bell(30,1),'Z'),(bell(40,1),'W')] 
-  go(l)
-  go([(1,X)])
+    l += [(ten(),   ten()), 
+          (twenty(),twenty()),
+          (thirty(),thirty())]
+  go(l,cohen=0.5)
   
-if __name__ == '__main__': _ediv()
+if __name__ == '__main__': _sdiv()
 
 """
 Output:
 
-[(1, 'X'), (2, 'X'), (3, 'X'), (4, 'X'), 
- (11, 'Y'), (12, 'Y'), (13, 'Y'), (14, 'Y')] ...
+[ (1, 10),  (2, 11),  (3, 12),  (4, 13), 
+ (20, 20), (21, 21), (22, 22), (23, 23), (24, 24), 
+ (30, 30)] ...
 1
-11
+20
+30
 
-[(1, 'Y'), (2, 'X'), (3, 'X'), (4, 'X'), 
- (11, 'Y'), (12, 'Y'), (13, 'Y'), (14, 'Y')] ...
-1
-
-[(1, 'Y'), (1, 'Y'), (2, 'X'), (2, 'X'), 
- (3, 'X'), (3, 'X'), (4, 'X'), (4, 'X'), (11, 'Y'), (11, 'Y')] ...
-1
-11
-
-[(1, 'X'), (2, 'X'), (3, 'X'), (4, 'X'), 
- (11, 'X'), (12, 'X'), (13, 'X'), (14, 'X')] ...
-1
-
-[(64, 'X'), (64, 'X'), (65, 'Y'), (65, 'Y'), 
- (68, 'X'), (68, 'X'), (69, 'Y'), (69, 'Y'), (70, 'X'), (70, 'X')] ...
-64
-80
-
-[(6.900378121061215, 'Y'), (7.038785729480842, 'Y'), 
- (7.31690058848835, 'Y'), (7.359039915634471, 'Y'), 
- (7.364480069138072, 'Y'), (7.553496312538384, 'Y'), 
- (7.581606303196569, 'Y'), (7.651878578401048, 'Y'), 
- (7.655341871448137, 'Y'), (7.677081766167625, 'Y')] ...
-6.90037812106
-16.907507693
-26.850034984
-36.8600218357
-
-[(1, 'X')] ...
-1
-
-
+[(3.7000699679075257, 13.718816007599141), 
+ (3.815015386011323, 7.222657539933019), 
+ (4.207498112954239, 10.56596537668784), 
+ (4.328418426639925, 9.920222370615866), 
+ (4.715076966608875, 10.343126948569484), 
+ (4.78790689427217, 8.306688616563584), 
+ (5.013513775695802, 6.965741666232676), 
+ (5.030668572838251, 8.546550180016057), ...] ...
+3.70006996791
+14.9850387857
+25.6550191106
 
 """
