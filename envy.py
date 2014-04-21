@@ -245,7 +245,7 @@ def table0(source):
                '<'     : t.less,
                '='     : t.klass,
                '[=<>]' : t.depen,
-               '[^=<>]': t.indep,
+               '^[^=<>]': t.indep,
                '.'     : t.headers}
   return t
 
@@ -256,9 +256,15 @@ def head(cells,t,numc='$'):
     header = this()
     header.col, header.name = col,cell
     t.at[cell] = header
+    print ""
     for pattern,val in t.patterns.items():
       if re.search(pattern,cell):
         val += [header]
+        print pattern,header,len(val)
+      else:
+        print "not",pattern, header.name
+  #print "depen",t.depen
+  print "indep",t.indep
   return t
 
 ## Create Table Rows
@@ -420,6 +426,7 @@ def dist(m,i,j,focus):
   "Euclidean distance 0 <= d <= 1 between things"
   thing1 = m.things(i,focus)
   thing2 = m.things(j,focus)
+  #print len(thing1),len(thing2)
   deltas, n = 0, 0
   for d,x in enumerate(thing1):
     y = thing2[d]
@@ -582,16 +589,19 @@ def _chunkDemo(model='nasa93'):
 @demo
 def _t1(f='data/nasa93a.csv'):
   "basic table "
+  print f
   m = Table(f)
   tree = chunk(m,
                m.slots(),
-               settings(verbose=True))
+               settings(verbose=True,minSize=6))
+  id=0;
   for _,leaf in leafs(tree):
+    id += 1
     print ""
     print leaf.id
     dittos={}
-    align([ditto(r.dec + r.obj,dittos) 
-           for r in leaf.value])
+    #align([ditto(r.dec + r.obj,dittos) for r in leaf.value], sep=" , ")
+    align([[id]+ r.dec + r.obj for r in leaf.value], sep=", ")
 
 @demo
 def _t2(f='data/nasa93nums.csv'):
@@ -613,7 +623,7 @@ def _t2(f='data/nasa93nums.csv'):
 
 The = Slots(normalize=True, missing='?')
 
-if __name__ == '__main__': eval(cmd())
+if __name__ == '__main__': eval(cmd("_t1('data/weatherd.csv')"))
 
 #print "obj:",map(lambda x: x.name, t.obj)
 #print "dec:", map(lambda x: x.name, t.dec)

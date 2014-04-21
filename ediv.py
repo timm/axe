@@ -76,7 +76,7 @@ def ediv(lst, tiny=2,
   def recurse(this, cuts):
     cut,e = divide(this)
     if cut: 
-      recurse(this[:cut], cuts)
+      recurse(this[:cut], cuts); 
       recurse(this[cut:], cuts)
     else:   
       cuts += [(e,this)]
