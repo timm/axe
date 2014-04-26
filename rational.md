@@ -1,3 +1,22 @@
+Think that all variables matter. No. Volume in n dim ed ms ions space
+
+Think that raw dimensions matter. No. Eigenvalues.  Reality is a rotation away
+
+Think that precise called matter. No
+Loftin zadeh. Precision utilty. Quality model long
+
+Think exact solutions matter. No.  trade spsce. Harman quote on uncertainty
+
+Think u can work it out by looking at it
+
+Nit offering go bounds of  the comptatipn.
+
+=============
+
+Models are qualitative intuition plus quantitative details. And once u know thay, u can MN rss with the model.
+==============
+
+
 Some one gives you a model. It runs. what happens next?
 
 Since I like, the reader, I list below the mistakes

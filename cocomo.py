@@ -22,7 +22,20 @@ def has(a,b) :
   return Value(lambda: a + (b-a)*rand())
 def of(a,b): 
   return Value(lambda: a + any(range(0,b-a+1)))
+def val(a):
+  return Value(lambda : a)
 
+def ats(it,lst):
+  t = tunings()
+  def x(str)      : return it[str].ask()
+  def tuning(str) : print "!>",str; print x(str); return t[str][x(str)]
+  return [tuning(str) for str in lst]
+    
+def prod(lst):
+  out=1
+  for x in lst: out *= x
+  return out
+   
 def cocomos():
   return dict(
     # calibration parameters
@@ -30,7 +43,9 @@ def cocomos():
     b=has(0.9, 1.1),  # tuning for exponential effects   
     c=has(3.0, 3.67),
     d=has(0.28, 0.33),
-    ksloc=has(2, 10000),# thousands of lines of codes
+    newKsloc=has(2, 10000),# thousands of lines of codes
+    adaptedKsloc=val(0),
+    revl =val(0),
     #--- scale factors: exponential effect on effort ----
     prec=of(1, 6), # Precedentedness
     flex=of(1, 6), # Development Flexibility
@@ -65,108 +80,96 @@ def cocomos():
     execution_testing_and_tools=of(1, 6)
     )
 
-def  estimate(it=cocomos()): 
+def _sced(it) : return ats(its,['sced'])
+
+for x in cocomos().keys():
+  exec "def _%s(it): return ats(its,['%s'])" % (x,x)
+ 
+def cocomo2000(it=cocomos()):
   """Estimate calculates the quotient result from 
   dividing the person-month calculation, pm(), 
   by the amount of calendar time necessary to 
-  develop the product, tdev().
-  """
-  months = pm(it)
-  timE   = tdev(it)
+  develop the product, tdev()."""
+
+  def size():
+    """Size displays the overall size of the product.
+    It is calculated from  the percentage of code 
+    discarded, revl(), the new source lines of code,
+    newsKsloc(), and the calculation of code reuse, 
+    equivalentKsloc().
+    """
+    return (1+( ats(it,['revl']) /100)) \
+      * (ats(it,['newKsloc'])+equivalentKsloc())
+  def equivalentKsloc():
+    """EquivalenKsloc is the calculation of code reuse.  It is derived from the
+    size of the adapted component in thousands of adapted source lines of code,
+    adaptedKsloc(), the adaptation adjustment modifier, aam(), and the
+    percentage of code that is reengineered by automatic translation, at()."""
+    return ats(it,['adaptedKsloc'])*aam()*(1-(at()/100))
+  def aam():
+    """#aam is the adaptation adjustment modifier that returns the result of one
+    of two calculations based on the value of the adaptation adjustment factor,
+    aaf().  aam is calculated from the degree of assessment and assimilation,
+    aa(), the adaptation adjustment factor, aaf(), the software understanding,
+    su(), and the programmer's unfamiliarity with the software, unfm(). 
+    This function was changed from the original version that contained errors.
+    """
+    f = aaf()
+    if f <= 50 :
+      return (aa()+f*(1+(0.02*su()*unfm())))/100
+    else :      
+      return (aa()+f+(su()*unfm()))/100
+  def aaf():
+    """aaf is the adaptation adjustment factor and is calculated using the percentage
+    of the adapted software's design that is modified, dm(), the percentage of
+    code modified, cm(), and the percentage of effort necessary to integrate
+    the reused software, im(). """
+    return 0.4*dm()+0.3*cm()+0.3*im()
+  def  scedPercent():
+    """scedPercent is the compression/expansion percentage in the sced effort
+    multiplier rating scale. These values reflect the rating scale from
+    Table 2.34, page 51 of the handout.  This function was added to the original 
+    version. """ 
+    sced=it["sced"].ask()
+    return [75,85,100,130,160][sced]
+  def tdev():
+    """tdev is the amount of calendar time necessary to develop the product. It
+    is calculated using the constant c(), the amount of effort in person-months, 
+    pmNs(), the exponent used in the tdev function, f(), and the compression/
+    expansion percentage in the sced effort multiplier rating scale,  
+    scedPercent(). """
+    return (c()*(pmNs()^f()))*scedPercent()/100
+  def f():
+    """f is the exponent used in the tdev function.  It is calculated from the
+    constants d and b, and the scale exponent used in the pmNs function.  """
+    return d()+0.2*(e()-b())
+  def pm():
+    """pm is the person-month calculation, the amount of time one person spends 
+    working on the project for one month.  It is calculated from the amount
+    of effort in person-months, pmNs(), the measure of the schedule constraint 
+    for the project, sced(), and the estimated effort, pmAuto()."""
+    return pmNs()*sced()+pmAuto()
+  def pmNs():
+    """ pmNs is the amount of effort in person-months. pmNs is calculated from the 
+    constant a(), size(), and the scale exponent, e(), and the following values. """
+    return it['a'].ask() * (size()^e())*               \
+        prod(ats(it,['rely','data','cplx','ruse',  
+                     'docu','time','stor','pvol',
+                     'acap','pcap','pcon','apex''plex',
+                     'ltex', 'tool', 'site']))    
+  def e() :
+    """e is the scale exponent used in the pmNs function.  It calculated from
+    the constant b and the percent result of summing the selected scale
+    scale factors"""
+    return b()+0.01*sum(ats(it,['prec','flex','resl','team','pmat']))
+  #--- main
+  print 1
+  print it.keys()
+  months = pm()
+  print 2
+  timE   = tdev()
   staff  = months/timE
   return months,timE,staff
-
-def size(it):
-  """Size displays the overall size of the product.
-  It is calculated from  the percentage of code 
-  discarded, revl(), the new source lines of code,
-  newsKsloc(), and the calculation of code reuse, 
-  equivalentKsloc().
-  """
-  return (1+( revl(it)/100)) \
-         * (newKsloc(it)+equivalentKsloc(it))
-
-def equivalentKsloc(it):
-  """EquivalenKsloc is the calculation of code reuse.  It is derived from the
-  size of the adapted component in thousands of adapted source lines of code,
-  adaptedKsloc(), the adaptation adjustment modifier, aam(), and the
-  percentage of code that is reengineered by automatic translation, at()."""
-  return adaptedKsloc(it)*aam(it)*(1-(at(it)/100))
-
-def aam(it):
-  """#aam is the adaptation adjustment modifier that returns the result of one
-  of two calculations based on the value of the adaptation adjustment factor,
-  aaf().  aam is calculated from the degree of assessment and assimilation,
-  aa(), the adaptation adjustment factor, aaf(), the software understanding,
-  su(), and the programmer's unfamiliarity with the software, unfm(). 
-  This function was changed from the original version that contained errors.
-  """
-  f = aaf(it)
-  if f <= 50 :
-    return (aa(it)+f*(1+(0.02*su(it)*unfm(it))))/100
-  else :      
-    return (aa(it)+f+(su(it)*unfm(it)))/100
-
-def  aaf(it):
-  """aaf is the adaptation adjustment factor and is calculated using the percentage
-  of the adapted software's design that is modified, dm(), the percentage of
-  code modified, cm(), and the percentage of effort necessary to integrate
-  the reused software, im(). """
-  return 0.4*dm(it)+0.3*cm(it)+0.3*im(it)
-
-def  scedPercent(it):
-  """scedPercent is the compression/expansion percentage in the sced effort
-  multiplier rating scale. These values reflect the rating scale from
-  Table 2.34, page 51 of the handout.  This function was added to the original 
-  version. """ 
-  sced=it["sced"].ask()
-  return [75,85,100,130,160][sced]
-
-def tdev(it):
-  """tdev is the amount of calendar time necessary to develop the product. It
-  is calculated using the constant c(), the amount of effort in person-months, 
-  pmNs(), the exponent used in the tdev function, f(), and the compression/
-  expansion percentage in the sced effort multiplier rating scale,  
-  scedPercent(). """
-  return (c(it)*(pmNs(it)^f(it)))*scedPercent(it)/100
-
-def f(it):
-  """f is the exponent used in the tdev function.  It is calculated from the
-   constants d and b, and the scale exponent used in the pmNs function.  """
-  return d(it)+0.2*(e(it)-b(it))
-
-def pm(it):
-  """pm is the person-month calculation, the amount of time one person spends 
-  working on the project for one month.  It is calculated from the amount
-  of effort in person-months, pmNs(), the measure of the schedule constraint 
-  for the project, sced(), and the estimated effort, pmAuto()."""
-  return pmNs(it)*sced(it)+pmAuto(it)
-
-def pmNs(it):
-  """ pmNs is the amount of effort in person-months. pmNs is calculated from the 
-  constant a(), size(), and the scale exponent, e(), and the following values. """
-  return ats(it,['a']) * (size(it)^e(it))*               \
-      prod(ats(it,['rely','data','cplx','ruse',  
-                   'docu','time','stor','pvol',
-                   'acap','pcap','pcon','apex''plex',
-                   'ltex', 'tool', 'site']))
- 
-def ats(it,lst):
-  t = tunings()
-  def x(str)      : return it[str].x()
-  def tuning(str) : return t[str][x(str)]
-  return [tuning(str) for str in lst]
-          
-def prod(lst):
-  out=1
-  for x in lst: out *= x
-  return out
-
-def e(it) :
-  """e is the scale exponent used in the pmNs function.  It calculated from
-  the constant b and the percent result of summing the selected scale
-  scale factors"""
-  return b(it)+0.01*sum(ats(it,['prec','flex','resl','team','pmat']))
 
 def tunings( _ = None):
   return dict( 
@@ -193,4 +196,4 @@ def tunings( _ = None):
     time= [   _,    _, 1.00, 1.11, 1.29, 1.63], 
     tool= [1.17, 1.09, 1.00, 0.90, 0.78,    _])
 
-print estimate()
+print cocomo2000()
