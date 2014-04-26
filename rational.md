@@ -31,6 +31,8 @@ if model learned from data, biased by model
 generation process- the data used to build the
 model, the search basis of the learner, etc etc
 
+and some models are over elaborated: too complex. Illusionary 
+
 if over constrainted, no solution
 
 if multi-goal, many solutions. moea rave
@@ -46,15 +48,27 @@ languages.
 
 olde school se people: look at it and reason about it
 
-only works 100% for very small models. spend more time designing the
-language and the compilers and writing the manuals than running
-the models.
-and you
-might miss something. limits to human cognitive
+only works 100% for very small models. spend more
+time designing the language and the compilers and
+writing the manuals than running the models.  and
+you might miss something. limits to human cognitive
 reasoning (wikipeia). the population example from
 that book i used in my thesis
 
 maybe a little wiser- get some output and show it to
 experts. limits to reflection valerdi.
 
-older still, 
+older still, von neumann, turing goedel. thought is
+an experimental science
+
+XXX give up abandon models? nope its what we do. if np
+other reasons, need to
+
+-- share insights with newbies
+
+-- satisfy legislative requirements
+
+-- justify decisions in count of law
+
+separate decisions from outcomes
+- good decisions vs good outcomes
