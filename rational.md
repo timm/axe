@@ -1,3 +1,49 @@
+use models ot to record facts but to refine the next question
+
+===================
+
+all models are wrong. but some are useful
+
+trust, b verify. when calibrate data available try
+it. and tat's is just optimizate with goal to reduce
+mre
+
+===================
+
+ostrich approach: reject all models cause they are
+all broken.  not going to work. you might ignore
+models but models won't ignore you. we live in a
+world designed by models. when you pass thru
+security on the mexican/usa border, the odds that
+you are subject to different security protocols is a
+function of a model of terrorist risk assessment. if
+your are late on your car payments, the ods that
+your care will be posessed come from a model of the
+risk/return of sending repo agents out after
+different kids of cars/customers. if you trade on
+the stock exchange, then the price you are changed
+for shares comes from any number of pricing models.
+
+so we need to know more about models- cause even if they are all bad,
+our tasks as citizens of the model-based world is to understand how
+to better handle those models.
+
+===================
+
+
+what a lot of poeople dont realize is how {\em unmeasured} is the world
+
+ Everything is vague to a degree you do not realize till you have tried to make it precise.
+- Bertrand Russell, “The Philosophy of Logical Atomism”
+
+puccia & levein: emasure the mud puddle
+
+which means that as your work on a model, you'l often hear people want to add some effect (e.g. winter storms) 
+but when you check, there is no data on that effect. or if there is, it is vey old and very remote. e.g. boehm
+cost of reuse selby 1985.
+
+===============
+
 Think that all variables matter. No. Volume in n dim ed ms ions space
 
 Think that raw dimensions matter. No. Eigenvalues.  Reality is a rotation away
