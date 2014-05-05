@@ -19,7 +19,6 @@ def rows(file,
         n += 1
         kept = "" 
 
-## Skip "Ignored" Columns
 def row(file,skip=The.reader.char.skip):
   "Leaps over any columns marked 'skip'."
   todo = None

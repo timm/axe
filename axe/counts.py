@@ -1,18 +1,38 @@
 import sys
+from bag import *
+from lib import *
 sys.dont_write_bytecode = True
 
-class Sym(Items):
-  "An Accumulator for syms"
-  def __init__(i): 
-    i.n=i.most=0; i.mode= None; i.counts={}
-  def __add__(i,x):
-    i.n += 1    
-    new  = i.counts.get(x,0) + 1
+class Sym(Bag):
+  def __init__(i,inits=[]): 
+    i.n,i.most,i.mode,i._e = 0,0,0,None
+    i.counts = {}
+    for symbol in inits: i + symbol
+  def __add__(i,symbol): 
+    i.inc(symbol,  1)
+  def __sub__(i,symbol): 
+    i.most = i.mode = None 
+    i.inc(symbol, -1)
+  def inc(i,x,n=1):
+    i._e = None
+    i.n += n
+    new  = i.counts.get(x,0) + n
     if new > i.most:
       i.most, i.mode = new, x
     i.counts[x] = new
+  def k(i): 
+    return len(i.cache.keys())
+  def ent(i): 
+    if i._e == None: 
+      i._e = i.most = i.mode = 0
+      for symbol in i.counts:
+        if i.counts[symbol] > i.most:
+          i.most,i.mode = i.counts[symbol],symbol
+        p = i.counts[symbol]*1.0/i.n
+        if p: i._e -= p*log2(p)*1.0
+    return i._e
 
-class Num(Items):
+class Num(Bag):
   "An Accumulator for numbers"
   def __init__(i,init=[],
                cache=The.nums.cache,

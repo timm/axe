@@ -1,13 +1,18 @@
 from __future__ import division
-import sys,re,random
+import sys,re,random,math
 sys.dont_write_bytecode = True
+from bag import *
 
 seed = random.seed
 any  = random.choice
+isa  = isinstance
+
+def nump(x)  : return isa(x,(int,long,float,complex))          
+def listp(x) : return isa(x,(list,tuple))
+def log2(x)  : return math.log(x,2)
 
 def says(*lst):
   say(', '.join(map(str, lst)))
-
 def say(x): 
   sys.stdout.write(str(x)); sys.stdout.flush()
 
@@ -17,29 +22,13 @@ def atom(x):
     try : return float(x)
     except ValueError : return x
 
-def atoms(str,sep=',', bad=r'(["\' \t\r\n]|#.*)'):
+def atoms(str,sep=',', bad=The.str.white):
   str = re.sub(bad,"",str)
   if str:
     return map(atom,str.split(sep))
 
-isa = isinstance
-def nump(x)  : return isa(x,(int,long,float,complex))          
-def listp(x) : return isa(x,(list,tuple))
-
-class Bag():
-  id = -1
-  def __init__(i,**fields) : 
-    i.override(fields)
-    i.id = Bag.id = Bag.id + 1
-  def also(i,**d)  : i.override(d) 
-  def override(i,d): i.__dict__.update(d)
-  def __repr__(i)  : return rprint(i)
-  def __hash__(i)  : return i.id
-  def __eq__(i,j)  : return i.id == j.id
-  def __neq__(i,j) : return i.id != j.id
-
-def rprintln(x) : return rprint(x,'\n')
-
+def rprintln(x): 
+  return rprint(x,'\n')
 def rprint(x, end=None, dpth=0):
   if end : space='  '
   else   : dpth,end,space = 1,'',' '
@@ -49,6 +38,8 @@ def rprint(x, end=None, dpth=0):
     return [k for k in sorted(keys) if not "_" in k]
   if isa(x,str) or nump(x):
     say(tabs(dpth) + q(x) + end)
+  if not isa(x,Bag) and hasattr(x,"__repr__"):
+    say(tabs(dpth) + x.__repr__() + end)
   elif isa(x,dict):
     for key in what2show(x.keys()):
       value = x[key]
