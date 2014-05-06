@@ -2,9 +2,10 @@ from __future__ import division
 import sys,re,random,math
 sys.dont_write_bytecode = True
 
-from demo     import *
+from demos    import *
 from settings import *
 
+rand = random.random
 any  = random.choice
 def seed(n = The.math.seed): random.seed(n)
 
@@ -97,10 +98,5 @@ def ditto(lst,old,mark="."):
     old[i] = now # next time, 'now' is the 'old' value
   return out # the lst with ditto marks inserted
 
-rprintln(The)
 
-fred()
-
-_the()
-
-#if __name__ == '__main__': print eval(cmd())
+if __name__ == '__main__': eval(cmd())

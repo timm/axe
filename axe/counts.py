@@ -1,43 +1,103 @@
+from __future__ import division
 import sys
-from bag import *
 from lib import *
 sys.dont_write_bytecode = True
 
-class Sym(Bag):
+class Sym(Slots):
   def __init__(i,inits=[]): 
-    i.n,i.most,i.mode,i._e = 0,0,0,None
-    i.counts = {}
+    i.n,i.counts,i._also = 0,{},None
     for symbol in inits: i + symbol
-  def __add__(i,symbol): 
-    i.inc(symbol,  1)
-  def __sub__(i,symbol): 
-    i.most = i.mode = None 
-    i.inc(symbol, -1)
+  def __add__(i,symbol): i.inc(symbol,  1)
+  def __sub__(i,symbol): i.inc(symbol, -1)
   def inc(i,x,n=1):
-    i._e = None
+    i._also = None
     i.n += n
-    new  = i.counts.get(x,0) + n
-    if new > i.most:
-      i.most, i.mode = new, x
-    i.counts[x] = new
+    i.counts[x] = i.counts.get(x,0) + n
   def k(i): 
-    return len(i.cache.keys())
-  def ent(i): 
-    if i._e == None: 
-      i._e = i.most = i.mode = 0
+    return len(i.counts.keys())
+  def most(i): return i.also().most
+  def mode(i): return i.also().mode
+  def ent(i) : return i.also().e
+  def also(i):
+    if not i._also:
+      e,most,mode = 0,0,None
       for symbol in i.counts:
-        if i.counts[symbol] > i.most:
-          i.most,i.mode = i.counts[symbol],symbol
-        p = i.counts[symbol]*1.0/i.n
-        if p: i._e -= p*log2(p)*1.0
-    return i._e
+        if i.counts[symbol] > most:
+          most,mode = i.counts[symbol],symbol
+        p = i.counts[symbol]/i.n
+        if p: 
+          e -= p*log2(p)
+        i._also = Slots(most=most,mode=mode,e=e)
+    return i._also
 
-class Num(Bag):
+@test
+def symed():
+  "Counting symbols"
+  s=Sym(list('first kick I took was when I hit'))
+  return [(' '  , s.mode()),
+          (7    , s.most()),
+          (3.628, round(s.ent(),3))]
+
+class Sample(Slots):
+  "Keep a random sample of stuff seen so far."
+  def __init__(i,inits=[],opts=The.sample):
+    i._cache,i.n,i.opts,i._also = [],0,opts,None
+    for number in inits: i + number
+  def __add__(i,x):
+    i.n += 1
+    if len(i._cache) < i.opts.keep: # if not full
+      i._also = None
+      i._cache += [x]               # then add
+    else: # otherwise, maybe replace an old item
+      if random.random() <= i.opts.keep/i.n:
+        i._also=None
+        i._cache[int(random.random()*i.ops.keep)] = x
+  def median(i) : i.also().median
+  def breaks(i) : i.also().breaks
+  def also(i):
+    if not i._also:
+      lst  = i._cache
+      n    = len(lst)
+      lst  = sorted(lst)
+      p= q = int(n*0.5)
+      r    = int(n*(0.5 + i.opts.tiny))
+      dull = lst[r] - lst[p]
+      if n % 2: q = p + 1
+      i._also = Slots(
+        median = (lst[p] + lst[q])*0.5,
+        breaks = chops(lst, opts=i.opts,
+                        sorted=True, dull=dull))
+    return i._also
+ 
+@test 
+def sampled():
+  seed()
+  s=Sample(rand()**2 for _ in range(20))
+  
+  
+def chops(lst,sorted=False,dull=0,opts=The.sample):
+  def chop(bins, before, i):
+    rest = len(lst) - i
+    if rest < opts.enough:
+      return []
+    j   = int(i + rest/bins)
+    while j < len(lst) and lst[j] <= before+dull:
+      j += 1
+    if j >= len(lst):
+      return []
+    now = lst[j]
+    return [now] + chop(bins - 1, now,j)
+  if not sorted:
+    lst   = sorted(lst)
+  now   = lst[0]
+  return [now] + chop(i.opts.bins, now,0)
+
+
+class Num(Slots):
   "An Accumulator for numbers"
   def __init__(i,init=[],
-               cache=The.nums.cache,
-               bins = The.nums.bins,
-               tiny = The.nums.tiny): 
+                tiny=0.1,
+                 opts=The.sample):
     i.n = i.m2 = i.mu = 0.0
     i.hi, i.lo = -1*10**32, 10**32
     i.some = Sample(cache=cache,bins=bins,tiny=tiny)
@@ -50,58 +110,7 @@ class Num(Bag):
     if x < i.lo: i.lo = x
     i.n   += 1    
     delta  = x - i.mu
-    i.mu  += delta*1.0/i.n
+    i.mu  += delta/i.n
     i.m2  += delta*(x - i.mu)
 
-class Sample(Items):
-  "Keep a random sample of stuff seen so far."
-  def __init__(i,cache = 128, bins = 7, tiny=0.1):
-    i._cache, i.size, i.n = [], cache, 0.0
-    i.bins, i.tiny = bins, tiny
-    i.stale()
-  def stale(i)  : i._median,i._breaks = None,None
-  def median(i) : i.fresh(); return i._median 
-  def breaks(i) : i.fresh(); return i._breaks
-  def fresh(i):
-    if not i._median: 
-      lst  = i._cache
-      n    = len(lst)
-      lst  = sorted(lst)
-      p= q = int(n*0.5)
-      r    = int(n*(0.5 + i.tiny))
-      dull = lst[r] - lst[p]
-      if n % 2: q = p + 1
-      i._median = (lst[p] + lst[q])*0.5
-      i._breaks = chops(lst, bins=i.bins,
-                        sorted=True, dull=dull)
-  def __add__(i,x):
-    i.n += 1
-    if len(i._cache) < i.size : # if cache not full
-      i.stale()
-      i._cache += [x]           # then add
-    else: # otherwise, maybe replace an old item
-      if random.random() <= i.size/i.n:
-        i.stale()
-        i._cache[int(random.random()*i.size)] = x
-
-def chops(lst,
-          sorted= False,
-          dull  = 0,
-          bins  = 7,
-          enough= The.nums.enough):
-  def chop(bins, before, i):
-    rest = len(lst) - i
-    if rest < enough:
-      return []
-    inc = rest*1.0/bins
-    j   = int(i + inc)
-    while j < len(lst) and lst[j] <= before+dull:
-      j += 1
-    if j >= len(lst):
-      return []
-    now = lst[j]
-    return [now] + chop(bins - 1, now,j)
-  if not sorted:
-    lst   = sorted(lst)
-  now   = lst[0]
-  return [now] + chop(bins, now,0)
+if __name__ == '__main__': eval(cmd())

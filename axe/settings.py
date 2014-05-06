@@ -1,6 +1,8 @@
 import sys
 sys.dont_write_bytecode = True 
-from demo import *
+from demos import *
+
+
 
 class Slots():
   id = -1
@@ -32,19 +34,17 @@ def mathings(): return Slots(
   ninf  = -1*10**32,
   teeny =    10**-32,
   brink = Slots(
-    hedges= [ .39, 1.0 ][0],
-    cohen = [ .3,   .5 ][0],
-    conf  = [ .95,  .99][0],
-    enough= 10))
+    hedges= [ .39, 1.0 ][0], 
+    cohen = [ .3 ,  .5 ][0],
+    conf  = [ .95,  .99][0]))
 
 @settings
-def numings(): return Slots(
-  cache=128,
-  bins=5)
-
-def fred(): print 1
+def sampleings(): return Slots(
+  keep = 256,
+  bins = 5,
+  tiny = 0.1,
+  enough=10)
 
 @demo
-def _the():
-  "Show the global settings."
-  rprintln(The)
+def thesed():
+  return 2
