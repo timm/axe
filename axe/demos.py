@@ -35,7 +35,7 @@ def test(f=None,cache=[]):
     for t in cache: 
       print "#",t.func_name ,doc(t)
       n=0
-      for want,got in  t().items():
+      for want,got in  t():
         n += 1
         if want == got:
           ok += 1

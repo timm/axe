@@ -7,8 +7,8 @@ class Slots():
   def __init__(i,**fields) : 
     i.override(fields)
     i._id = Slots.id = Slots.id + 1
-  def also(i,**d)  : i.override(d) 
-  def override(i,d): i.__dict__.update(d)
+  def also(i,**d)  : return i.override(d)
+  def override(i,d): i.__dict__.update(d); return i
   def __hash__(i)  : return i._id
   def __eq__(i,j)  : return i._id == j._id
   def __neq__(i,j) : return i._id != j._id
@@ -35,11 +35,11 @@ def mathings(): return Slots(
     conf  = [ .95,  .99][0]))
 
 @settings
-def sampleings(): return Slots(
+def sampleings(**d): return Slots(
   keep = 256,
   bins = 5,
   tiny = 0.1,
-  enough=10)
+  enough=4).override(d)
 
 @demo
 def thesed():

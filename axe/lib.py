@@ -11,6 +11,10 @@ def seed(n = The.math.seed): random.seed(n)
 
 ### printing
 
+def gs1(lst): return map(lambda x: round(x,1),lst)
+def gs2(lst): return map(lambda x: round(x,2),lst)
+def gs3(lst): return map(lambda x: round(x,3),lst)
+
 def says(*lst):
   say(', '.join(map(str, lst)))
 def say(x): 

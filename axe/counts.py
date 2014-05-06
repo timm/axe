@@ -34,9 +34,9 @@ class Sym(Slots):
 def symed():
   "Counting symbols"
   s=Sym(list('first kick I took was when I hit'))
-  return {' '  : s.mode(),
-          7    : s.most(),
-          3.628: round(s.ent(),3)}
+  return [[  ' ' , s.mode()         ],
+          [ 7    , s.most()         ],
+          [ 3.628, round(s.ent(),3) ]]
 
 class Sample(Slots):
   "Keep a random sample of stuff seen so far."
@@ -51,9 +51,9 @@ class Sample(Slots):
     else: # otherwise, maybe replace an old item
       if random.random() <= i.opts.keep/i.n:
         i._also=None
-        i._cache[int(random.random()*i.ops.keep)] = x
-  def median(i) : i.also().median
-  def breaks(i) : i.also().breaks
+        i._cache[int(random.random()*i.opts.keep)] = x
+  def median(i) : return i.also().median
+  def breaks(i) : return i.also().breaks
   def also(i):
     if not i._also:
       lst  = i._cache
@@ -72,9 +72,15 @@ class Sample(Slots):
 @test
 def sampled():
   seed()
-  s=Sample(rand()**2 for _ in range(20))
-  print s.breaks()
-  return {1:1}
+  s0= Sample([1,1,2,2,3]*100,
+             sampleings(bins=2))
+  s1= Sample([1,1,1,2]*20)
+  s3= Sample([rand()**2 for _ in range(1000)])
+  print gs2(s3.breaks())
+  return [[ [1,2],  s0.breaks() ],
+          [ [1,2],  s1.breaks() ],
+          [ [0, 0.09, 0.24, 0.41, 0.71], 
+            gs2(s3.breaks())            ]]
   
 def chops(lst,sorted=False,dull=0,opts=The.sample):
   def chop(bins, before, i):
@@ -90,7 +96,7 @@ def chops(lst,sorted=False,dull=0,opts=The.sample):
     return [now] + chop(bins - 1, now,j)
   lst = lst if sorted else sorted(lst)
   now = lst[0]
-  return [now] + chop(i.opts.bins, now,0)
+  return [now] + chop(opts.bins, now,0)
 
 class Num(Slots):
   "An Accumulator for numbers"
