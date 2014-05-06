@@ -2,8 +2,6 @@ import sys
 sys.dont_write_bytecode = True 
 from demos import *
 
-
-
 class Slots():
   id = -1
   def __init__(i,**fields) : 
@@ -17,11 +15,9 @@ class Slots():
 
 The = Slots()
 def settings(f=None):
-  if f==None: 
-    rprintln(The)
-  else:
-    The.__dict__[f.func_name[:-4]] = f()
-    return f
+  if f==None : rprintln(The)
+  else       : The.__dict__[f.func_name[:-4]] = f()
+  return f
 
 @settings
 def stringings(): return Slots(
