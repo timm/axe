@@ -10,20 +10,18 @@ def cmd(com="demo('-h')"):
   return sys.argv[1] + '(' + ','.join(words) + ')'
 
 def demo(f=None,demos=[]): 
-  print f
   def demoDoc(d):
     return '# '+d.__doc__+"\n" if d.__doc__ else ""  
   if f == '-h':
     for d in demos: 
       print 'python axe.py',d.func_name,demoDoc(d)
-  if f: 
+  elif f: 
     demos.append(f); 
-    print "d",demos
-    return f
-  print 1
-  s='|'+'='*40 +'\n'
-  for d in demos: 
-    print '\n==|',d.func_name,s,demoDoc(d),d()
+  else:
+    s='|'+'='*40 +'\n'
+    for d in demos: 
+      print '\n==|',d.func_name,s,demoDoc(d),d()
+  return f
 
 def test(f=None,tests=[]): 
   if f: tests.append(f); return f

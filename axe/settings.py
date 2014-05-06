@@ -42,6 +42,8 @@ def numings(): return Slots(
   cache=128,
   bins=5)
 
+def fred(): print 1
+
 @demo
 def _the():
   "Show the global settings."

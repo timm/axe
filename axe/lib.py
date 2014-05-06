@@ -2,7 +2,7 @@ from __future__ import division
 import sys,re,random,math
 sys.dont_write_bytecode = True
 
-from demo import *
+from demo     import *
 from settings import *
 
 any  = random.choice
@@ -97,7 +97,10 @@ def ditto(lst,old,mark="."):
     old[i] = now # next time, 'now' is the 'old' value
   return out # the lst with ditto marks inserted
 
+rprintln(The)
 
-#_the()
+fred()
 
-if __name__ == '__main__': print cmd()
+_the()
+
+#if __name__ == '__main__': print eval(cmd())
