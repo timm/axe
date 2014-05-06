@@ -88,11 +88,9 @@ def chops(lst,sorted=False,dull=0,opts=The.sample):
       return []
     now = lst[j]
     return [now] + chop(bins - 1, now,j)
-  if not sorted:
-    lst   = sorted(lst)
-  now   = lst[0]
+  lst = lst if sorted else sorted(lst)
+  now = lst[0]
   return [now] + chop(i.opts.bins, now,0)
-
 
 class Num(Slots):
   "An Accumulator for numbers"
