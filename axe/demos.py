@@ -34,13 +34,15 @@ def test(f=None,cache=[]):
     ok=no=0
     for t in cache: 
       print "#",t.func_name ,doc(t)
-      for n,(want,got) in  enumerate(t()):
+      n=0
+      for want,got in  t().items():
+        n += 1
         if want == got:
           ok += 1
-          print "CORRECT:",t.func_name,'question', n+1
+          print "CORRECT:",t.func_name,'question', n
         else:
           no += 1
-          print "WRONG  :",t.func_name,'question',n+1
+          print "WRONG  :",t.func_name,'question',n
     if cache:
       print '\n# Final score = %s/%s = %s%% CORRECT' \
           % (ok,(ok+no),round(100*ok/(ok+no)))

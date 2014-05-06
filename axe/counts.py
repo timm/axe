@@ -34,9 +34,9 @@ class Sym(Slots):
 def symed():
   "Counting symbols"
   s=Sym(list('first kick I took was when I hit'))
-  return [(' '  , s.mode()),
-          (7    , s.most()),
-          (3.628, round(s.ent(),3))]
+  return {' '  : s.mode(),
+          7    : s.most(),
+          3.628: round(s.ent(),3)}
 
 class Sample(Slots):
   "Keep a random sample of stuff seen so far."
@@ -69,11 +69,12 @@ class Sample(Slots):
                         sorted=True, dull=dull))
     return i._also
  
-@test 
+@test
 def sampled():
   seed()
   s=Sample(rand()**2 for _ in range(20))
-  
+  print s.breaks()
+  return {1:1}
   
 def chops(lst,sorted=False,dull=0,opts=The.sample):
   def chop(bins, before, i):
