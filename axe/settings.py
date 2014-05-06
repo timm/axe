@@ -15,8 +15,8 @@ class Slots():
 
 The = Slots()
 def settings(f=None):
-  if f==None : rprintln(The)
-  else       : The.__dict__[f.func_name[:-4]] = f()
+  if f : The.__dict__[f.func_name[:-4]] = f() 
+  else : rprintln(The)
   return f
 
 @settings
