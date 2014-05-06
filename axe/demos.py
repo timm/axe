@@ -39,10 +39,10 @@ def test(f=None,cache=[]):
         n += 1
         if want == got:
           ok += 1
-          print "CORRECT:",t.func_name,'question', n
+          print "CORRECT:",t.func_name,'test', n
         else:
           no += 1
-          print "WRONG  :",t.func_name,'question',n
+          print "WRONG  :",t.func_name,'test',n
     if cache:
       print '\n# Final score = %s/%s = %s%% CORRECT' \
           % (ok,(ok+no),round(100*ok/(ok+no)))

@@ -71,16 +71,16 @@ class Sample(Slots):
  
 @test
 def sampled():
+  "Sampling up to 256 items in a distribution."
   seed()
   s0= Sample([1,1,2,2,3]*100,
              sampleings(bins=2))
   s1= Sample([1,1,1,2]*20)
-  s3= Sample([rand()**2 for _ in range(1000)])
-  print gs2(s3.breaks())
-  return [[ [1,2],  s0.breaks() ],
-          [ [1,2],  s1.breaks() ],
-          [ [0, 0.09, 0.24, 0.41, 0.71], 
-            gs2(s3.breaks())            ]]
+  s2= Sample([rand()**2 for _ in range(1000)],
+             sampleings(bins=5))
+  return [[ [1,2],  s0.breaks()                            ],
+          [ [1,2],  s1.breaks()                            ],
+          [ [0, 0.09, 0.24, 0.41, 0.71],  gs2(s2.breaks()) ]]
   
 def chops(lst,sorted=False,dull=0,opts=The.sample):
   def chop(bins, before, i):
