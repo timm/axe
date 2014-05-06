@@ -1,31 +1,20 @@
 from __future__ import division
 import sys,re,random,math
 sys.dont_write_bytecode = True
-from bag import *
 
-seed = random.seed
+from demo import *
+from settings import *
+
 any  = random.choice
-isa  = isinstance
+def seed(n = The.math.seed): random.seed(n)
 
-def nump(x)  : return isa(x,(int,long,float,complex))          
-def listp(x) : return isa(x,(list,tuple))
-def log2(x)  : return math.log(x,2)
+### printing
 
 def says(*lst):
   say(', '.join(map(str, lst)))
 def say(x): 
-  sys.stdout.write(str(x)); sys.stdout.flush()
-
-def atom(x):
-  try : return int(x)
-  except ValueError:
-    try : return float(x)
-    except ValueError : return x
-
-def atoms(str,sep=',', bad=The.str.white):
-  str = re.sub(bad,"",str)
-  if str:
-    return map(atom,str.split(sep))
+  sys.stdout.write(str(x))
+  sys.stdout.flush()
 
 def rprintln(x): 
   return rprint(x,'\n')
@@ -38,8 +27,6 @@ def rprint(x, end=None, dpth=0):
     return [k for k in sorted(keys) if not "_" in k]
   if isa(x,str) or nump(x):
     say(tabs(dpth) + q(x) + end)
-  if not isa(x,Bag) and hasattr(x,"__repr__"):
-    say(tabs(dpth) + x.__repr__() + end)
   elif isa(x,dict):
     for key in what2show(x.keys()):
       value = x[key]
@@ -54,7 +41,7 @@ def rprint(x, end=None, dpth=0):
       rprint(something, end, dpth+1)
   else:
     left,right,name = '(',')',x.__class__.__name__
-    if isa(x,Bag):
+    if isa(x,Slots):
       left,right,name='{','}',''
     say(tabs(dpth) + name + left + end)
     rprint(x.__dict__, end, dpth + 1)
@@ -62,16 +49,44 @@ def rprint(x, end=None, dpth=0):
 
 def align(lsts,sep=' '):
   "Print, filled to max width of each column."
-  widths = {}
+  width = {}
   for lst in lsts: # pass1- find column max widths
     for n,x in enumerate(lst):
-      w = len('%s' % x)
-      widths[n] = max(widths.get(n,0),w)
+      width[n] = max(widths.get(n,0),len('%s' % x))
   for lst in lsts: # pass2- print to max width
     for n,x in enumerate(lst):
-      say(('%s' % x).rjust(widths[n],' ')+sep)
+      say(('%s' % x).rjust(width[n],' ')+sep)
     print ""
   print ""
+
+### typings
+
+isa  = isinstance
+               
+def nump(x)  : return isa(x,(int,long,float,complex))          
+def listp(x) : return isa(x,(list,tuple))
+
+def atom(x):
+  try : return int(x)
+  except ValueError:
+    try : return float(x)
+    except ValueError : return x
+
+def atoms(str,sep=',', bad=The.string.white):
+  str = re.sub(bad,"",str)
+  if str:
+    return map(atom,str.split(sep))
+
+def cmd(com="demo('-h')"):
+  "Convert command line to a function call."
+  if len(sys.argv) < 2: return com
+  def strp(x): return isinstance(x,basestring)
+  def wrap(x): return "'%s'"%x if strp(x) else str(x)
+  words = map(wrap,map(atom,sys.argv[2:]))
+  return sys.argv[1] + '(' + ','.join(words) + ')'
+
+
+def log2(x)  : return math.log(x,2)
 
 def ditto(lst,old,mark="."):
   "Show 'mark' if an item of  lst is same as old."
@@ -81,3 +96,8 @@ def ditto(lst,old,mark="."):
     out   += [mark if  before == now else now]
     old[i] = now # next time, 'now' is the 'old' value
   return out # the lst with ditto marks inserted
+
+
+#_the()
+
+if __name__ == '__main__': print cmd()
