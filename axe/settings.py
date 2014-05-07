@@ -2,40 +2,41 @@ import sys
 sys.dont_write_bytecode = True 
 from demos import *
 
-class Slots():
+class Thing():
   id = -1
   def __init__(i,**fields) : 
     i.override(fields)
-    i._id = Slots.id = Slots.id + 1
+    i._id = Thing.id = Thing.id + 1
   def also(i,**d)  : return i.override(d)
   def override(i,d): i.__dict__.update(d); return i
   def __hash__(i)  : return i._id
   def __eq__(i,j)  : return i._id == j._id
   def __neq__(i,j) : return i._id != j._id
 
-The = Slots()
+The = Thing()
 def settings(f=None):
   if f : The.__dict__[f.func_name[:-4]] = f() 
   else : rprintln(The)
   return f
 
 @settings
-def stringings(): return Slots(
+def stringings(): return Thing(
   white= r'(["\' \t\r\n]|#.*)')
 
 @settings
-def mathings(): return Slots(
+def mathings(): return Thing(
   seed  = 1,
   inf   =    10**32,
   ninf  = -1*10**32,
   teeny =    10**-32,
-  brink = Slots(
+  bootstraps = 500,
+  brink = Thing(
     hedges= [ .39, 1.0 ][0], 
     cohen = [ .3 ,  .5 ][0],
     conf  = [ .95,  .99][0]))
 
 @settings
-def sampleings(**d): return Slots(
+def sampleings(**d): return Thing(
   keep = 256,
   bins = 5,
   tiny = 0.1,

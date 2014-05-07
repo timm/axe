@@ -11,9 +11,12 @@ def seed(n = The.math.seed): random.seed(n)
 
 ### printing
 
-def gs1(lst): return map(lambda x: round(x,1),lst)
-def gs2(lst): return map(lambda x: round(x,2),lst)
-def gs3(lst): return map(lambda x: round(x,3),lst)
+def g1(x)    : return round(x,1)
+def g2(x)    : return round(x,2)
+def g3(x)    : return round(x,3)
+def gs1(lst) : return map(g1,lst)
+def gs2(lst) : return map(g2,lst)
+def gs3(lst) : return map(g3,lst)
 
 def says(*lst):
   say(', '.join(map(str, lst)))
@@ -46,7 +49,7 @@ def rprint(x, end=None, dpth=0):
       rprint(something, end, dpth+1)
   else:
     left,right,name = '(',')',x.__class__.__name__
-    if isa(x,Slots):
+    if isa(x,Thing):
       left,right,name='{','}',''
     say(tabs(dpth) + name + left + end)
     rprint(x.__dict__, end, dpth + 1)
@@ -90,8 +93,7 @@ def cmd(com="demo('-h')"):
   words = map(wrap,map(atom,sys.argv[2:]))
   return sys.argv[1] + '(' + ','.join(words) + ')'
 
-
-def log2(x)  : return math.log(x,2)
+def log2(x): return math.log(x,2)
 
 def ditto(lst,old,mark="."):
   "Show 'mark' if an item of  lst is same as old."
