@@ -34,15 +34,15 @@ class Sym(Thing):
 def symed():
   "Counting symbols"
   s=Sym(list('first kick I took was when I hit'))
-  return [[  ' ' , s.mode()         ],
-          [ 7    , s.most()         ],
-          [ 3.628, round(s.ent(),3) ]]
+  return [ ' '   , s.mode()
+         ,  7    , s.most()
+         , 3.628 , round(s.ent(),3) ]
 
 class Sample(Thing):
   "Keep a random sample of stuff seen so far."
   def __init__(i,inits=[],opts=The.sample):
     i._cache,i.n,i.opts,i._also = [],0,opts,None
-     for number in inits: i + number
+    for number in inits: i + number
   def __add__(i,x):
     i.n += 1
     if len(i._cache) < i.opts.keep: # if not full
@@ -59,29 +59,16 @@ class Sample(Thing):
       lst  = i._cache
       n    = len(lst)
       lst  = sorted(lst)
-      p= q = int(n*0.5)
+      p= q = max(0, int(n*0.5) - 1)
       r    = int(n*(0.5 + i.opts.tiny))
       dull = lst[r] - lst[p]
-      if n % 2: q = p + 1
+      if not oddp(n) : q = p + 1
       i._also = Thing(
         median = (lst[p] + lst[q])*0.5,
         breaks = chops(lst, opts=i.opts,
                         sorted=True, dull=dull))
     return i._also
  
-@test
-def sampled():
-  "Sampling up to 256 items in a distribution."
-  seed()
-  s0= Sample([1,1,2,2,3]*100,
-             sampleings(bins=2))
-  s1= Sample([1,1,1,2]*20)
-  s2= Sample([rand()**2 for _ in range(1000)],
-             sampleings(bins=5))
-  return [[ [1,2],  s0.breaks()                            ],
-          [ [1,2],  s1.breaks()                            ],
-          [ [0, 0.09, 0.24, 0.41, 0.71],  gs2(s2.breaks()) ]]
-  
 def chops(lst,sorted=False,dull=0,opts=The.sample):
   def chop(bins, before, i):
     rest = len(lst) - i
@@ -98,22 +85,38 @@ def chops(lst,sorted=False,dull=0,opts=The.sample):
   now = lst[0]
   return [now] + chop(opts.bins, now,0)
 
+@test
+def sampled():
+  "Sampling up to 256 items in a distribution."
+  seed()
+  s0= Sample([1,1,2,2,3]*100,
+             sampleings(bins=2))
+  s1= Sample([1,1,1,2]*20)
+  s2= Sample([rand()**2 for _ in range(1000)],
+             sampleings(bins=5))
+  return [ [1,2],  s0.breaks()
+         , [1,2],  s1.breaks() 
+         , [0, 0.09, 0.24, 0.41, 0.71],  
+           gs2(s2.breaks())]
+
 class Num(Thing):
   "An accumulator for numbers"
   def __init__(i,init=[], opts=The.sample):
+    i.opts = opts
     i.zero()
     for x in init: i + x
   def zero(i):
-    i.lo,i.hi,i.some = 10**32,-10**32,Sample([],opts)
-    i.n = i.mu = i.m2 = 0.0
+    i.lo,i.hi = 10**32,-10**32
+    i.some = Sample([],i.opts)
+    i.n = i.mu = i.m2 = 0
   def __lt__(i,j): 
     return i.mu < j.mu
   def sd(i) :
     if i.n < 2: return i.mu
     else: 
       return (max(0,i.m2)/(i.n - 1))**0.5
-  def median(i): i.some.median()
-  def breaks(i): i.some.breaks()
+  def median(i): return i.some.median()
+  def breaks(i): return i.some.breaks()
   def __add__(i,x):
     if i.some: i.some + x
     if x > i.hi: i.hi = x
@@ -123,17 +126,28 @@ class Num(Thing):
     i.mu += delta/(1.0*i.n)
     i.m2 += delta*(x - i.mu)
   def __sub__(i,x):
-    i.some = None
+    i.some = None 
     if i.n < 2: return i.zero()
     i.n  -= 1
     delta = x - i.mu
     i.mu -= delta/(1.0*i.n)
-    i.m2 -= delta*(x - i.mu)  
+    i.m2 -= delta*(x - i.mu) 
+  def t(i,j):
+    signal = abs(i.mu - j.mu)
+    noise  = (i.sd()**2/i.n + j.sd()**2/j.n)**0.5
+    return signal / noise
   def cohen(i,j,small=The.math.brink.cohen):
-    return (i.mu - j.mu) < i.sd()*small
+    v1 = i.sd()**2 
+    v2 = j.sd()**2
+    a  = (i.n - 1)*v1
+    b  = (j.n - 1)*v2
+    c  = i.n + j.n - 2
+    s  = ((a+b)/c)**0.5
+    d  = abs(i.mu - j.mu)
+    return d/s < small
   def hedges(i,j,small=The.math.brink.hedges):
     "Hedges effect size test."
-    num   = (i.n - 1)*i.sd()**2 + (j.n - 1)*j.s**2
+    num   = (i.n - 1)*i.sd()**2 + (j.n - 1)*j.sd()**2
     denom = (i.n - 1) + (j.n - 1)
     sp    = ( num / denom )**0.5
     delta = abs(i.mu - j.mu) / sp  
@@ -141,8 +155,9 @@ class Num(Thing):
     return delta * c < small
   def bootstrap(i,j):
     return bootstrap(i.some._cache, j.some._cache)
-  def winLoss(i,j,reverse=False,same=ttest,
-              conf=The.math.brink.ttest):
+  def winLoss(i,j,reverse=False, 
+              same=lambda a,b,c:ttest(a,b,c),
+              conf=The.math.brink.conf):
     if same(i,j,conf=conf):
       i.tie += 1; j.tie += 1
       return False # no one win or lost
@@ -172,13 +187,43 @@ def ttest(i,j,conf=The.math.brink.conf,
         return y1 + deltay * deltax
       x1,y1 = x2,y2
     return hi[1]
-  def ttest1(n)L 
+  def ttest1(n):
     return interpolate(n,threshold[conf])
   return ttest1(i.n + j.n - 2,conf) < i.t(j)
 
+@test
+def numed():
+  def push(x,n=0.2):
+    return x*(1 + n*rand())
+  n1=Num(x    for x in range(30))
+  n2=Num(30+x for x in range(30))
+  lst1 = [x   for x in range(30)]
+  n3, n4, n5 = Num(lst1), Num(), Num()
+  for x in lst1: n4 + x; n5 + x
+  for x in lst1: n5 - x
+  n6 = Num(lst1)
+  n7 = Num(push(x,0) for x in lst1)
+  n8 = Num(push(x,0.1) for x in lst1)
+  n9 = Num(push(x,1) for x in lst1)
+  return [14.5, n1.mu
+         ,8.80, g2(n1.sd())
+         ,14.5, n1.median()
+         ,30,   n2.lo
+         ,59,   n2.hi
+         ,True, n3.sd() == n4.sd()
+         ,0,    n5.sd()
+         ,0,    n5.n
+         ,True, n8.cohen(n7)
+         ,False,n9.cohen(n7)
+         ,True, n8.hedges(n7)
+         ,False,n9.hedges(n7)
+         ,True, n8.bootstrap(n7)
+         ,False,n9.bootstrap(n7)
+         ]
+
 def bootstrap(y,z,
               conf = The.math.brink.conf,
-              b    = The math.bootstraps):
+              b    = The.math.bootstraps):
   """The bootstrap hypothesis test from p220 to 223 
   of Efron's book 'Introduction to the bootstrap'."""
   def someTestStatistic(y,z): 
@@ -196,8 +241,8 @@ def bootstrap(y,z,
   bigger = 0.0
   for i in range(b):
     if someTestStatistic(
-      Num([one(yhat) for _ in yhat]),
-      Num([one(zhat) for _ in zhat])) > tobs:
+      Num(one(yhat) for _ in yhat),
+      Num(one(zhat) for _ in zhat)) > tobs:
       bigger += 1
   return bigger / b >= (1-conf)
 

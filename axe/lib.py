@@ -94,6 +94,8 @@ def cmd(com="demo('-h')"):
   return sys.argv[1] + '(' + ','.join(words) + ')'
 
 def log2(x): return math.log(x,2)
+def oddp(x): return (x % 2) == 1
+
 
 def ditto(lst,old,mark="."):
   "Show 'mark' if an item of  lst is same as old."

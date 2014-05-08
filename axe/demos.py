@@ -26,28 +26,24 @@ def demo(f=None,cache=[]):
   return f
 
 def test(f=None,cache=[]):
-  def doc(t):
-    return ': '+t.__doc__ if t.__doc__ else ""  
   if f: 
-    cache.append(f)
-  else:
-    ok=no=0
-    for t in cache: 
-      print "#",t.func_name ,doc(t)
-      n=0
-      for want,got in  t():
-        n += 1
-        if want == got:
-          ok += 1
-          print "CORRECT:",t.func_name,'test', n
-        else:
-          no += 1
-          print "WRONG  :",t.func_name,'test',n
-    if cache:
-      print '\n# Final score = %s/%s = %s%% CORRECT' \
-          % (ok,(ok+no),round(100*ok/(ok+no)))
-  return f
-
+    cache += [f]
+    return f
+  ok = no = 0
+  for t in cache: 
+    print '#',t.func_name ,t.__doc__ or ''
+    prefix, n, found = None, 0, t() or []
+    while found:
+      this, that = found.pop(0), found.pop(0)
+      if this == that:
+        ok, n, prefix = ok+1, n+1,'CORRECT:'
+      else: 
+        no, n, prefix = no+1, n+1,'WRONG  :'
+      print prefix,t.func_name,'test',n
+  if ok+no:
+    print '\n# Final score: %s/%s = %s%% CORRECT' \
+        % (ok,(ok+no),int(100*ok/(ok+no)))
+ 
 @demo
 def demoed(show=1):
   "Sample demo."
