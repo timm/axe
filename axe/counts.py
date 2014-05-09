@@ -52,6 +52,7 @@ class Sample(Thing):
       if random.random() <= i.opts.keep/i.n:
         i._also=None
         i._cache[int(random.random()*i.opts.keep)] = x
+  def all(i)    : return i._cache
   def median(i) : return i.also().median
   def breaks(i) : return i.also().breaks
   def also(i):
@@ -117,6 +118,7 @@ class Num(Thing):
       return (max(0,i.m2)/(i.n - 1))**0.5
   def median(i): return i.some.median()
   def breaks(i): return i.some.breaks()
+  def all(i)   : return i.some.all()
   def __add__(i,x):
     if i.some: i.some + x
     if x > i.hi: i.hi = x
@@ -153,20 +155,13 @@ class Num(Thing):
     delta = abs(i.mu - j.mu) / sp  
     c     = 1 - 3.0 / (4*(i.n + j.n - 2) - 1)
     return delta * c < small
-  def bootstrap(i,j):
-    return bootstrap(i.some._cache, j.some._cache)
-  def winLoss(i,j,reverse=False, 
-              same=lambda a,b,c:ttest(a,b,c),
-              conf=The.math.brink.conf):
-    if same(i,j,conf=conf):
-      i.tie += 1; j.tie += 1
-      return False # no one win or lost
-    iBest= i.mu < j.mu if reverse else i.mu > j.mu
-    if iBest:
-      i.win += 1; j.loss+= 1
-    else:
-      i.loss+= 1; j.win += 1 
-    return True # we have a winner
+  def bootstrap(i,j,conf = The.math.brink.conf,
+                b    = The.math.bootstraps):
+    return bootstrap(i.all(), j.all(),conf=conf,b=b)
+  def a12(i,j,small=The.math.a12.small,
+              reverse=The.math.a12.reverse):
+    return a12(i.all(),j.all(),
+              reverse=reverse) < small
 
 def ttest(i,j,conf=The.math.brink.conf,
           threshold={.95:((  1, 12.70 ),( 3, 3.182),
@@ -226,56 +221,85 @@ def bootstrap(y,z,
               b    = The.math.bootstraps):
   """The bootstrap hypothesis test from p220 to 223 
   of Efron's book 'Introduction to the bootstrap'."""
-  def someTestStatistic(y,z): 
-    s1,s2 = y.sd(), z.sd()
-    delta = z.mu - y.mu
+  def someTestStatistic(one,two): 
+    s1,s2 = one.sd(), two.sd()
+    delta = two.mu - one.mu
     if s1+s2:
-      delta =  delta/((s1/y.n + s2/z.n)**0.5)
+      delta =  delta/((s1/one.n + s2/two.n)**0.5)
     return delta
   def one(lst): return lst[ int(any(len(lst))) ]
   def any(n)  : return random.uniform(0,n)
   x      = y + z
-  tobs   = someTestStatistic(y,z)
-  yhat   = [y1 - y.mu + x.mu for y1 in y.all]
-  zhat   = [z1 - z.mu + x.mu for z1 in z.all]
+  xnum,ynum,znum = Num(x), Num(y), Num(z)
+  tobs   = someTestStatistic(ynum,znum)
+  yhat   = [y1 - ynum.mu + xnum.mu for y1 in y]
+  zhat   = [z1 - znum.mu + xnum.mu for z1 in z]
   bigger = 0.0
   for i in range(b):
     if someTestStatistic(
       Num(one(yhat) for _ in yhat),
       Num(one(zhat) for _ in zhat)) > tobs:
       bigger += 1
-  return bigger / b >= (1-conf)
+  return (bigger / b) <= conf
 
-def a12cmp(x,y):
-  if y - x > 0 : return 1
-  if y - x < 0 : return -1
+def a12gt(x,y):
+  if (y - x) > 0 : return 1
+  if (y - x) < 0 : return -1
   else: return 0
 
-def a12(lst1,lst2, gt= a12cmp):
+def a12(lst1,lst2, gt= a12gt,
+        reverse= The.math.a12.reverse):
   "how often is x in lst1 more than y in lst2?"
   def loop(t,t1,t2): 
-    while t1.i < t1.n and t2.i < t2.n:
-      h1 = t1.l[t1.i]
-      h2 = t2.l[t2.i]
-      h3 = t2.l[t2.i+1] if t2.i+1 < t2.n else None 
+    while t1.k < t1.n and t2.k < t2.n:
+      h1 = t1.l[t1.k]
+      h2 = t2.l[t2.k]
+      h3 = t2.l[t2.k+1] if t2.k+1 < t2.n else None 
       if gt(h1,h2) < 0:
-        t1.i  += 1; t1.gt += t2.n - t2.i
+        t1.k  += 1; t1.gt += t2.n - t2.k
       elif h1 == h2:
         if h3 and gt(h1,h3) < 0:
-            t1.gt += t2.n - t2.i  - 1
-        t1.i  += 1; t1.eq += 1; t2.eq += 1
+            t1.gt += t2.n - t2.k  - 1
+        t1.k  += 1; t1.eq += 1; t2.eq += 1
       else:
         t2,t1  = t1,t2
     return t.gt*1.0, t.eq*1.0
   #--------------------------
+  if reverse:
+    lst1,lst2 = lst2,lst1
   lst1 = sorted(lst1, cmp=gt)
   lst2 = sorted(lst2, cmp=gt)
   n1   = len(lst1)
   n2   = len(lst2)
-  t1   = Thing(l=lst1,i=0,eq=0,gt=0,n=n1)
-  t2   = Thing(l=lst2,i=0,eq=0,gt=0,n=n2)
+  t1   = Thing(l=lst1,k=0,eq=0,gt=0,n=n1)
+  t2   = Thing(l=lst2,k=0,eq=0,gt=0,n=n2)
   gt,eq= loop(t1, t1, t2)
-  #print gt,eq,n1,n2
-  return gt/(n1*n2) + eq/2/(n1*n2)
+  return (gt + eq/2)/(n1*n2)
+
+@test
+def a12ed(small=The.math.a12.small,
+          repeats=100):
+  def twolists():
+    lst1 = [rand() for _ in range(repeats)]
+    lst2 = [rand() for _ in range(repeats)]
+    c1   = a12(lst1,lst2) 
+    c2   = a12slow(lst1,lst2)
+    return c1==c2
+  def a12slow(lst1,lst2,rev=True):              
+    "how often is x in lst1 more than y in lst2?"
+    more = same = 0.0
+    n1,n2=len(lst1),len(lst2)
+    for x in lst1:
+      for y in lst2:
+        if   x==y : same += 1
+        elif rev     and x > y : more += 1
+        elif not rev and x < y : more += 1
+    return (more+ 0.5*same) / (n1*n2)
+  seed()
+  return [ True, twolists(),
+           True, twolists(),
+           True, twolists(),
+           True, twolists(),
+           True, twolists()]
 
 if __name__ == '__main__': eval(cmd())

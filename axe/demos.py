@@ -48,3 +48,8 @@ def test(f=None,cache=[]):
 def demoed(show=1):
   "Sample demo."
   print show/2
+
+@demo
+def tests():
+  "Run all the test cases."
+  test()

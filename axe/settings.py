@@ -30,6 +30,9 @@ def mathings(): return Thing(
   ninf  = -1*10**32,
   teeny =    10**-32,
   bootstraps = 500,
+  a12   = Thing(
+    small   = [.6, .68][0],
+    reverse = False),
   brink = Thing(
     hedges= [ .39, 1.0 ][0], 
     cohen = [ .3 ,  .5 ][0],
