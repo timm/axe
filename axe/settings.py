@@ -21,7 +21,7 @@ def settings(f=None):
 
 @settings
 def stringings(): return Thing(
-  white= r'(["\' \t\r\n]|#.*)')
+  white= r'["\' \t\r\n]')
 
 @settings
 def mathings(): return Thing(
@@ -50,6 +50,8 @@ def readerings(): return Thing(
   sep      = ",",
   bad      = r'(["\' \t\r\n]|#.*)',
   skip     ='?',
+  showonly = '-'
+  numc     ='$',
   patterns = {
     '\$'     : lambda z: z.nums,
     '\.'     : lambda z: z.syms,
@@ -60,7 +62,7 @@ def readerings(): return Thing(
     '^[^=<>]': lambda z: z.indep,
     '.'      : lambda z: t.headers})
 
-print The.reader.patterns.keys()
+print The.reader.patterns["="]
 
 @demo
 def thesed():

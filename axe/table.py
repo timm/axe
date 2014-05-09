@@ -45,7 +45,7 @@ def table0(source):
     more =[], less =[], klass=[], headers=[], 
     _rows=[], at   ={}, patterns= The.reader.pattern)
 
-def head(cells,t,numc='$'):
+def head(cells,t,numc=The.reader.numc):
   for col,cell in enumerate(cells):
     this   = Num if numc in cell else Sym
     header = this()
