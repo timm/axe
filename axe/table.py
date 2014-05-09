@@ -1,11 +1,13 @@
-from lib import *
+from __future__ import division
+from lib    import *
+from demos  import *
+from counts import *
 import sys
 sys.dont_write_bytecode = True
 
 def rows(file, 
-          sep   = The.reader.char.sep,
-          bad   = The.reader.bad,
-          filter= The.reader.filter):
+          sep= The.reader.sep,
+          bad= The.reader.bad):
   """Read comma-eperated rows that might be split 
   over many lines.  Finds strings that can compile 
   to nums.  Kills comments and white space."""
@@ -15,11 +17,11 @@ def rows(file,
     kept += now
     if kept:
       if not now[-1] == sep:
-        yield n, map(filter,kept.split(sep))
+        yield n, map(atom,kept.split(sep))
         n += 1
         kept = "" 
 
-def row(file,skip=The.reader.char.skip):
+def row(file,skip= The.reader.skip):
   "Leaps over any columns marked 'skip'."
   todo = None
   for n,line in rows(file):
@@ -37,19 +39,11 @@ def table(source, rows = True, contents = row):
 
 ## Create Table 
 def table0(source):
-  t = Bag(source = source,
-            depen=[], indep=[], nums =[], syms=[], 
-            more =[], less =[], klass=[], headers=[], 
-            _rows=[], at   ={})
-  t.patterns= {'\$'    : t.nums,
-               '\.'    : t.syms,
-               '>'     : t.more,
-               '<'     : t.less,
-               '='     : t.klass,
-               '[=<>]' : t.depen,
-               '^[^=<>]': t.indep,
-               '.'     : t.headers}
-  return t
+  return Thing(
+    source = source,
+    depen=[], indep=[], nums =[], syms=[], 
+    more =[], less =[], klass=[], headers=[], 
+    _rows=[], at   ={}, patterns= The.reader.pattern)
 
 def head(cells,t,numc='$'):
   for col,cell in enumerate(cells):

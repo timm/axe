@@ -45,6 +45,23 @@ def sampleings(**d): return Thing(
   tiny = 0.1,
   enough=4).override(d)
 
+@settings
+def readerings(): return Thing(
+  sep      = ",",
+  bad      = r'(["\' \t\r\n]|#.*)',
+  skip     ='?',
+  patterns = {
+    '\$'     : lambda z: z.nums,
+    '\.'     : lambda z: z.syms,
+    '>'      : lambda z: z.more,
+    '<'      : lambda z: z.less,
+    '='      : lambda z: z.klass,
+    '[=<>]'  : lambda z: z.depen,
+    '^[^=<>]': lambda z: z.indep,
+    '.'      : lambda z: t.headers})
+
+print The.reader.patterns.keys()
+
 @demo
 def thesed():
   return 2
