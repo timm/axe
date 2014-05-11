@@ -33,7 +33,9 @@ def rprint(x, end=None, dpth=0):
   q = lambda z : '\"%s\"'%z if isa(z,str) else str(z)
   def what2show(keys):
     return [k for k in sorted(keys) if not "_" in k]
-  if isa(x,str) or nump(x):
+  if callable(x):
+    say(tabs(dpth) + 'function' + end)
+  elif isa(x,str) or nump(x):
     say(tabs(dpth) + q(x) + end)
   elif isa(x,dict):
     for key in what2show(x.keys()):
@@ -45,8 +47,11 @@ def rprint(x, end=None, dpth=0):
         say(end)
         rprint(value, end, dpth + 1)
   elif listp(x):
-    for something in x:
-      rprint(something, end, dpth+1)
+    if len([]) == 0:
+      say(tabs(dpth) + '[]' + end)
+    else:
+      for something in x:
+        rprint(something, end, dpth+1)
   else:
     left,right,name = '(',')',x.__class__.__name__
     if isa(x,Thing):

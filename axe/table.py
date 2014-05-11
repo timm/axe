@@ -53,7 +53,8 @@ def head(cells,t,numc=The.reader.numc):
     t.at[cell] = header
     for pattern,val in t.patterns.items():
       if re.search(pattern,cell):
-        val.append(header)
+        where  = val(t)
+        where += [header]
   return t
 
 def body(cells,t,rows=True):
@@ -66,8 +67,9 @@ def clone(t) :
   return head([h.name for h in t.headers],
               table0('copy of '+t.source))
   
-
 def tabled(f='data/weather.csv'):
-  table(f)
+  t=table(f)
+  for x in  t.indep: print '\t',rprint(x)
+  #rprintln(t)
 
 if __name__ == '__main__': eval(cmd())

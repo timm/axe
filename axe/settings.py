@@ -60,7 +60,7 @@ def readerings(): return Thing(
     '='      : lambda z: z.klass,
     '[=<>]'  : lambda z: z.depen,
     '^[^=<>]': lambda z: z.indep,
-    '.'      : lambda z: t.headers})
+    '.'      : lambda z: z.headers})
 
 print The.reader.patterns["="]
 
