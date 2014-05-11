@@ -43,7 +43,7 @@ def table0(source):
     source = source,
     depen=[], indep=[], nums =[], syms=[], 
     more =[], less =[], klass=[], headers=[], 
-    _rows=[], at   ={}, patterns= The.reader.pattern)
+    _rows=[], at   ={}, patterns= The.reader.patterns)
 
 def head(cells,t,numc=The.reader.numc):
   for col,cell in enumerate(cells):
@@ -53,7 +53,7 @@ def head(cells,t,numc=The.reader.numc):
     t.at[cell] = header
     for pattern,val in t.patterns.items():
       if re.search(pattern,cell):
-        val += [header]
+        val.append(header)
   return t
 
 def body(cells,t,rows=True):
@@ -66,3 +66,8 @@ def clone(t) :
   return head([h.name for h in t.headers],
               table0('copy of '+t.source))
   
+
+def tabled(f='data/weather.csv'):
+  table(f)
+
+if __name__ == '__main__': eval(cmd())

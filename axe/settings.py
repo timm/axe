@@ -50,7 +50,7 @@ def readerings(): return Thing(
   sep      = ",",
   bad      = r'(["\' \t\r\n]|#.*)',
   skip     ='?',
-  showonly = '-'
+  showonly = '-',
   numc     ='$',
   patterns = {
     '\$'     : lambda z: z.nums,
