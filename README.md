@@ -1,7 +1,7 @@
 Axe
 ====
 
-Data mining = (1) find some crap; (2) cut the crap; (3) go to step1.  
+Data mining = (1) find some cr\*p; (2) cut the cr\*p; (3) go to step1.  
 Copyright (c) 2014 TIm Menzies
 
           _____                                _______
