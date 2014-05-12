@@ -29,6 +29,7 @@ Contents
 
 - ./old/ contains the last version.
 - ./axe/ contains the code being developed right now
+- ./axe/data sample data files
 - ./etc/ is ignorable optional environ stuff
 - ./index.cgi is an experimental web server to render these files. Again, ignorable.
 
