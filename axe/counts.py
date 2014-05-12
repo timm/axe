@@ -276,6 +276,59 @@ def a12(lst1,lst2, gt= a12gt,
   gt,eq= loop(t1, t1, t2)
   return (gt + eq/2)/(n1*n2)
 
+ def a12slow(lst1,lst2,rev=True):              
+  "how often is x in lst1 more than y in lst2?"
+  more = same = 0.0
+  n1,n2=len(lst1),len(lst2)
+  for x in lst1:
+    for y in lst2:
+      if   x==y : same += 1
+      elif rev     and x > y : more += 1
+      elif not rev and x < y : more += 1
+  return (more+ 0.5*same) / (n1*n2)
+
+@test
+def a12eged():
+  imc=[0.0467727930535
+       ,0.107422839506
+       ,0.143231939163
+       ,0.196049098581
+       ,0.214018838305 #5
+       ,0.295759259259 
+       ,0.336425231415
+       ,0.400960144928
+       ,0.42 #10
+       ,0.546434017595
+       ,0.600305405094
+       ,0.608229508197
+       ,0.722651845971
+       ,0.733923766816 # 1-
+       ,0.780266115803 
+       ,1.260375
+       ,1.30157738095
+       ,1.37680851064
+       ,14.6394]
+  twopair=[0.0982951758956
+           ,0.219622928726
+           ,0.238561501328
+           ,0.250163795386
+           ,0.254009239283 #5
+           ,0.271034376595 
+           ,0.311751739438
+           ,0.314324693953
+           ,0.477840168799
+           ,0.522865519664 #10
+           ,0.526105062302
+           ,0.681018891615
+           ,0.684250921515
+           ,0.739683771336 
+           ,0.77830625818 #1
+           ,0.812443866931
+           ,0.850571338711
+           ,1.42509168327
+           ,1.4263754399]
+  print "a12eg>",a12slow(twopair,imc)
+
 @test
 def a12ed(small=The.math.a12.small,
           repeats=100):
@@ -285,16 +338,6 @@ def a12ed(small=The.math.a12.small,
     c1   = a12(lst1,lst2) 
     c2   = a12slow(lst1,lst2)
     return c1==c2
-  def a12slow(lst1,lst2,rev=True):              
-    "how often is x in lst1 more than y in lst2?"
-    more = same = 0.0
-    n1,n2=len(lst1),len(lst2)
-    for x in lst1:
-      for y in lst2:
-        if   x==y : same += 1
-        elif rev     and x > y : more += 1
-        elif not rev and x < y : more += 1
-    return (more+ 0.5*same) / (n1*n2)
   seed()
   return [ True, twolists(),
            True, twolists(),
