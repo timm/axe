@@ -83,14 +83,17 @@ def _sdiv():
   import random
   bell= random.gauss
   random.seed(1)
-  def go(lst,cohen=0.3):
+  def go(lst,cohen=0.3,
+         num1=lambda x:x[0],
+         num2=lambda x:x[1]):
     print ""; print sorted(lst)[:10],"..."
-    for d in  sdiv(lst,cohen=cohen):
-        print d[1][0][0]
+    for d in  sdiv(lst,cohen=cohen,num1=num1,num2=num2):
+      print d[1][0][0]
   l = [ (1,10), (2,11),  (3,12),  (4,13),
        (20,20),(21,21), (22,22), (23,23), (24,24),
        (30,30),(31,31), (32,32), (33,33),(34,34)]
   go(l,cohen=0.3)
+  go(map(lambda x:(x[1],x[1]),l))
   ten     = lambda: bell(10,2)
   twenty  = lambda: bell(20,2)
   thirty  = lambda: bell(30,2)

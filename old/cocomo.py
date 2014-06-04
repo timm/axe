@@ -15,9 +15,12 @@ class Value:
   def tell(i,value=None): 
     i._x = value
   def ask(i): 
-    if i._x == None: i._x = i.f()
+    if i._x == None: 
+      i._x = i.f()
     return i._x
 
+def biased(a,b,bias=2):
+  return Value(lambda: a + (b-a)*(rand()**bias))
 def has(a,b) : 
   return Value(lambda: a + (b-a)*rand())
 def of(a,b): 
@@ -27,10 +30,13 @@ def val(a):
 
 def ats(it,lst):
   t = tunings()
-  def x(str)      : return it[str].ask()
-  def tuning(str) : print "!>",str; print x(str); return t[str][x(str)]
-  return [tuning(str) for str in lst]
-    
+  def x(this)  : return it[this].ask()
+  def tuning(this) : 
+    y = x(this)
+    return t[this][y-1] if this in t else y
+  out = [tuning(this) for this in lst]
+  return out[0] if len(out)==1 else out
+  
 def prod(lst):
   out=1
   for x in lst: out *= x
@@ -44,14 +50,22 @@ def cocomos():
     c=has(3.0, 3.67),
     d=has(0.28, 0.33),
     newKsloc=has(2, 10000),# thousands of lines of codes
-    adaptedKsloc=val(0),
-    revl =val(0),
+    adaptedKsloc=biased(2,10000,bias=3),
+    revl    = biased(0,100,bias=3),
+    aa      = biased(0,100,bias=3), # LOOK UP
+    su      = biased(0,100,bias=0.3),  # LOOK UP
+    unfm    = biased(0,100,bias=3),  # LOOK UP
+    dm      = biased(0,100,bias=3),
+    cm      = biased(0,100,bias=3),
+    at      = biased(0,100,bias=3),
+    im      = biased(0,100,bias=3),
+    atKProd = biased(0,100,bias=0.3),
     #--- scale factors: exponential effect on effort ----
-    prec=of(1, 6), # Precedentedness
-    flex=of(1, 6), # Development Flexibility
-    resl=of(1, 6), # Architecture/Risk Resolution
-    team=of(1, 6), # Team Cohesion
-    pmat=of(1, 6), # Process Maturity
+    prec    = of(1, 5), # Precedentedness
+    flex    = of(1, 5), # Development Flexibility
+    resl    = of(1, 5), # Architecture/Risk Resolution
+    team    = of(1, 5), # Team Cohesion
+    pmat    = of(1, 5), # Process Maturity
     #--- effort multipliers: linear effect on effort ----
     # Product Factors:
     rely=of(1, 5), # Required Software Reliability 
@@ -82,14 +96,17 @@ def cocomos():
 
 def _sced(it) : return ats(its,['sced'])
 
-for x in cocomos().keys():
-  exec "def _%s(it): return ats(its,['%s'])" % (x,x)
+for z in cocomos().keys():
+  exec "def _%s(it): return ats(its,['%s'])" % (z,z)
  
 def cocomo2000(it=cocomos()):
   """Estimate calculates the quotient result from 
   dividing the person-month calculation, pm(), 
   by the amount of calendar time necessary to 
   develop the product, tdev()."""
+  def x(*y):
+    "Hook into data lookup"
+    return ats(it,y)
 
   def size():
     """Size displays the overall size of the product.
@@ -98,14 +115,14 @@ def cocomo2000(it=cocomos()):
     newsKsloc(), and the calculation of code reuse, 
     equivalentKsloc().
     """
-    return (1+( ats(it,['revl']) /100)) \
-      * (ats(it,['newKsloc'])+equivalentKsloc())
+    return (1+( x('revl') /100)) \
+      * (x('newKsloc')+equivalentKsloc())
   def equivalentKsloc():
     """EquivalenKsloc is the calculation of code reuse.  It is derived from the
     size of the adapted component in thousands of adapted source lines of code,
     adaptedKsloc(), the adaptation adjustment modifier, aam(), and the
     percentage of code that is reengineered by automatic translation, at()."""
-    return ats(it,['adaptedKsloc'])*aam()*(1-(at()/100))
+    return x('adaptedKsloc')*aam()*(1-(x('at')/100))
   def aam():
     """#aam is the adaptation adjustment modifier that returns the result of one
     of two calculations based on the value of the adaptation adjustment factor,
@@ -116,64 +133,63 @@ def cocomo2000(it=cocomos()):
     """
     f = aaf()
     if f <= 50 :
-      return (aa()+f*(1+(0.02*su()*unfm())))/100
+      return (x('aa')+f*(1+(0.02*x('su')*x('unfm'))))/100
     else :      
-      return (aa()+f+(su()*unfm()))/100
+      return (x('aa')+f*(x('su')*x('unfm')))/100
   def aaf():
     """aaf is the adaptation adjustment factor and is calculated using the percentage
     of the adapted software's design that is modified, dm(), the percentage of
     code modified, cm(), and the percentage of effort necessary to integrate
     the reused software, im(). """
-    return 0.4*dm()+0.3*cm()+0.3*im()
+    return 0.4*x('dm')+0.3*x('cm')+0.3*x('im')
   def  scedPercent():
     """scedPercent is the compression/expansion percentage in the sced effort
     multiplier rating scale. These values reflect the rating scale from
     Table 2.34, page 51 of the handout.  This function was added to the original 
     version. """ 
-    sced=it["sced"].ask()
-    return [75,85,100,130,160][sced]
+    y=x("sced")
+    return [75,85,100,130,160][int(round(y))]
   def tdev():
     """tdev is the amount of calendar time necessary to develop the product. It
     is calculated using the constant c(), the amount of effort in person-months, 
     pmNs(), the exponent used in the tdev function, f(), and the compression/
     expansion percentage in the sced effort multiplier rating scale,  
     scedPercent(). """
-    return (c()*(pmNs()^f()))*scedPercent()/100
+    return (x('c')*(pmNs()**f()))*scedPercent()/100
   def f():
     """f is the exponent used in the tdev function.  It is calculated from the
     constants d and b, and the scale exponent used in the pmNs function.  """
-    return d()+0.2*(e()-b())
+    return x('d')+0.2*(e()-x('b'))
   def pm():
     """pm is the person-month calculation, the amount of time one person spends 
     working on the project for one month.  It is calculated from the amount
     of effort in person-months, pmNs(), the measure of the schedule constraint 
     for the project, sced(), and the estimated effort, pmAuto()."""
-    return pmNs()*sced()+pmAuto()
+    return pmNs()*x('sced')+pmAuto()
   def pmNs():
     """ pmNs is the amount of effort in person-months. pmNs is calculated from the 
     constant a(), size(), and the scale exponent, e(), and the following values. """
-    return it['a'].ask() * (size()^e())*               \
-        prod(ats(it,['rely','data','cplx','ruse',  
+    return x('a') * (size()**e())*               \
+        prod(x('rely','data','cplx','ruse',  
                      'docu','time','stor','pvol',
-                     'acap','pcap','pcon','apex''plex',
-                     'ltex', 'tool', 'site']))    
+                     'acap','pcap','pcon','aexp','plex',
+                     'ltex', 'tool', 'site'))    
+  def pmAuto() :
+   return (x('adaptedKsloc')*(x('at')/100))/x('atKProd') 
   def e() :
     """e is the scale exponent used in the pmNs function.  It calculated from
     the constant b and the percent result of summing the selected scale
     scale factors"""
-    return b()+0.01*sum(ats(it,['prec','flex','resl','team','pmat']))
+    return x('b')+0.01*sum(x('prec','flex','resl','team','pmat'))
   #--- main
-  print 1
-  print it.keys()
   months = pm()
-  print 2
   timE   = tdev()
   staff  = months/timE
-  return months,timE,staff
+  return months,timE,staff,it
 
 def tunings( _ = None):
   return dict( 
-    flex= [5.07, 4.05, 3.04, 2.03, 1.01,    _ ],
+    flex= [5.07, 4.05, 3.04, 2.03, 1.01,    _],
     pmat= [7.80, 6.24, 4.68, 3.12, 1.56,    _],
     prec= [6.20, 4.96, 3.72, 2.48, 1.24,    _],
     resl= [7.07, 5.65, 4.24, 2.83, 1.41,    _],
@@ -196,4 +212,11 @@ def tunings( _ = None):
     time= [   _,    _, 1.00, 1.11, 1.29, 1.63], 
     tool= [1.17, 1.09, 1.00, 0.90, 0.78,    _])
 
-print cocomo2000()
+months,timE,staff,it =  cocomo2000()
+
+for k in sorted(it.keys()):
+  print "%30s = %s" % (k,it[k].ask())
+for k,v in (('-----------------------',
+             '-----------------------'),
+            ('months',months), ('timE',timE),('staff',staff)):
+  print "%30s = %s" % (k,v)
