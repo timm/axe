@@ -28,22 +28,31 @@ def of(a,b):
 def val(a):
   return Value(lambda : a)
 
-def ats(it,lst):
-  t = tunings()
-  def x(this)  : return it[this].ask()
-  def tuning(this) : 
-    y = x(this)
-    return t[this][y-1] if this in t else y
-  out = [tuning(this) for this in lst]
+def gets(it,lst):
+  t   = tunings()
+  out = [get(it,this,t) for this in lst]
   return out[0] if len(out)==1 else out
+
+def get(it,this,t=None):
+  t = t or tunings()
+  y = it[this].ask()
+  return t[this][y-1] if this in t else y
   
 def prod(lst):
-  out=1
-  for x in lst: out *= x
+  if not lst: return 0
+  out = lst[0]
+  for x in lst[1:]: out *= x
   return out
    
+class Candidate:
+  def __init__(i,obj={},dec={}):
+    i.objs,i.decs=d1,d2
+    i.obj=[None]*len(d1.keys())
+    i.dec=[None]*len(d2.keys())
+
 def cocomos():
-  return dict(
+  
+  return Candidate(dec=dict(
     # calibration parameters
     a=has(2.25,3.25), # tuning for linear effects
     b=has(0.9, 1.1),  # tuning for exponential effects   
@@ -89,15 +98,15 @@ def cocomos():
     site=of(1, 6), # Multi-site Development
     sced=of(1, 5), # Schedule pressure
     # defect removal methods
-    automated_analysis=of(1, 6),
-    peer_reviews=of(1, 6),
-    execution_testing_and_tools=of(1, 6)
+    automated_analysis = of(1, 6),
+    peer_reviews = of(1, 6),
+    execution_testing_and_tools = of(1, 6)
     )
 
-def _sced(it) : return ats(its,['sced'])
+def _sced(it) : return gets(its,'sced')
 
-for z in cocomos().keys():
-  exec "def _%s(it): return ats(its,['%s'])" % (z,z)
+#for z in cocomos().keys():
+# exec "def _%s(it): return ats(its,['%s'])" % (z,z)
  
 def cocomo2000(it=cocomos()):
   """Estimate calculates the quotient result from 
@@ -106,7 +115,7 @@ def cocomo2000(it=cocomos()):
   develop the product, tdev()."""
   def x(*y):
     "Hook into data lookup"
-    return ats(it,y)
+    return gets(it,y)
 
   def size():
     """Size displays the overall size of the product.
@@ -116,7 +125,7 @@ def cocomo2000(it=cocomos()):
     equivalentKsloc().
     """
     return (1+( x('revl') /100)) \
-      * (x('newKsloc')+equivalentKsloc())
+        * (x('newKsloc')+equivalentKsloc())
   def equivalentKsloc():
     """EquivalenKsloc is the calculation of code reuse.  It is derived from the
     size of the adapted component in thousands of adapted source lines of code,
