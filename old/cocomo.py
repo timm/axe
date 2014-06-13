@@ -34,7 +34,7 @@ def gets(it,lst):
   return out[0] if len(out)==1 else out
 
 def get(it,this,t=None):
-  t = t or tunings()
+  t = t or tunings() 
   y = it[this].ask()
   return t[this][y-1] if this in t else y
   
@@ -50,9 +50,8 @@ class Candidate:
     i.obj=[None]*len(d1.keys())
     i.dec=[None]*len(d2.keys())
 
-def cocomos():
-  
-  return Candidate(dec=dict(
+def cocomos(**updates):
+  return constrain(updates, dict(
     # calibration parameters
     a=has(2.25,3.25), # tuning for linear effects
     b=has(0.9, 1.1),  # tuning for exponential effects   
@@ -101,12 +100,7 @@ def cocomos():
     automated_analysis = of(1, 6),
     peer_reviews = of(1, 6),
     execution_testing_and_tools = of(1, 6)
-    )
-
-def _sced(it) : return gets(its,'sced')
-
-#for z in cocomos().keys():
-# exec "def _%s(it): return ats(its,['%s'])" % (z,z)
+    ))
  
 def cocomo2000(it=cocomos()):
   """Estimate calculates the quotient result from 
