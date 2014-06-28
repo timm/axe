@@ -2,15 +2,21 @@ from __future__ import division
 import sys
 sys.dont_write_bytecode = True
 
+def atom(x):
+  try : return int(x)
+  except ValueError:
+    try : return float(x)
+    except ValueError : return x
+
 def cmd(com="demo('-h')"):
   "Convert command line to a function call."
   if len(sys.argv) < 2: return com
   def strp(x): return isinstance(x,basestring)
-  def wrap(x): return "'%s'"%x if strp(x) else str(x)
+  def wrap(x): return "'%s'"%x if strp(x) else str(x)  
   words = map(wrap,map(atom,sys.argv[2:]))
   return sys.argv[1] + '(' + ','.join(words) + ')'
 
-def demo(f=None,cache=[]): 
+def demo(f=None,cache=[]):   
   def doc(d):
     return '# '+d.__doc__ if d.__doc__ else ""  
   if f == '-h':
@@ -43,7 +49,13 @@ def test(f=None,cache=[]):
   if ok+no:
     print '\n# Final score: %s/%s = %s%% CORRECT' \
         % (ok,(ok+no),int(100*ok/(ok+no)))
- 
+
+@test
+def tested():
+  return [True,True,  # should pass
+          False,True, # should fail
+          1, 2/2]     # should pass
+
 @demo
 def demoed(show=1):
   "Sample demo."
@@ -53,3 +65,4 @@ def demoed(show=1):
 def tests():
   "Run all the test cases."
   test()
+

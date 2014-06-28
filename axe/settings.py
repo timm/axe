@@ -62,8 +62,13 @@ def readerings(): return Thing(
     '^[^=<>]': lambda z: z.indep,
     '.'      : lambda z: z.headers})
 
-print The.reader.patterns["="]
+@settings
+def treeings(**d): return Thing(
+  min=4).override(d)
 
 @demo
-def thesed():
-  return 2
+def thingsed(**d):
+  import lib
+  lib.rprintln(The)
+
+if __name__ == '__main__': eval(cmd())

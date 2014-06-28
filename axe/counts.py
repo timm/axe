@@ -3,6 +3,7 @@ import sys
 from lib import *
 sys.dont_write_bytecode = True
 
+# XXXX whatis k and why does Sym need it?
 class Sym(Thing):
   def __init__(i,inits=[]): 
     i.n,i.counts,i._also = 0,{},None
@@ -13,8 +14,7 @@ class Sym(Thing):
     i._also = None
     i.n += n
     i.counts[x] = i.counts.get(x,0) + n
-  def k(i): 
-    return len(i.counts.keys())
+  def k(i)   : return len(i.counts.keys())
   def most(i): return i.also().most
   def mode(i): return i.also().mode
   def ent(i) : return i.also().e
@@ -276,7 +276,7 @@ def a12(lst1,lst2, gt= a12gt,
   gt,eq= loop(t1, t1, t2)
   return (gt + eq/2)/(n1*n2)
 
- def a12slow(lst1,lst2,rev=True):              
+def a12slow(lst1,lst2,rev=True):              
   "how often is x in lst1 more than y in lst2?"
   more = same = 0.0
   n1,n2=len(lst1),len(lst2)

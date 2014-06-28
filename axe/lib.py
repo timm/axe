@@ -23,16 +23,17 @@ def says(*lst):
 def say(x): 
   sys.stdout.write(str(x))
   sys.stdout.flush()
+def nl(): print ""
 
 def rprintln(x): 
   return rprint(x,'\n')
-def rprint(x, end=None, dpth=0):
+def rprint(x, end=None, dpth=-1):
   if end : space='  '
   else   : dpth,end,space = 1,'',' '
   tabs = lambda n : space * n
   q = lambda z : '\"%s\"'%z if isa(z,str) else str(z)
   def what2show(keys):
-    return [k for k in sorted(keys) if not "_" in k]
+    return [k for k in sorted(keys) if not "_" in str(k)]
   if callable(x):
     say(tabs(dpth) + 'function' + end)
   elif isa(x,str) or nump(x):
@@ -47,7 +48,7 @@ def rprint(x, end=None, dpth=0):
         say(end)
         rprint(value, end, dpth + 1)
   elif listp(x):
-    if len([]) == 0:
+    if len(x) == 0:
       say(tabs(dpth) + '[]' + end)
     else:
       for something in x:
@@ -57,7 +58,7 @@ def rprint(x, end=None, dpth=0):
     if isa(x,Thing):
       left,right,name='{','}',''
     say(tabs(dpth) + name + left + end)
-    rprint(x.__dict__, end, dpth + 1)
+    rprint(x.__dict__, end, dpth+1)
     say(tabs(dpth) + right + end)
 
 def align(lsts,sep=' '):
@@ -79,28 +80,14 @@ isa  = isinstance
 def nump(x)  : return isa(x,(int,long,float,complex))          
 def listp(x) : return isa(x,(list,tuple))
 
-def atom(x):
-  try : return int(x)
-  except ValueError:
-    try : return float(x)
-    except ValueError : return x
 
 def atoms(str,sep=',', bad=The.string.white):
   str = re.sub(bad,"",str)
   if str:
     return map(atom,str.split(sep))
 
-def cmd(com="demo('-h')"):
-  "Convert command line to a function call."
-  if len(sys.argv) < 2: return com
-  def strp(x): return isinstance(x,basestring)
-  def wrap(x): return "'%s'"%x if strp(x) else str(x)
-  words = map(wrap,map(atom,sys.argv[2:]))
-  return sys.argv[1] + '(' + ','.join(words) + ')'
-
 def log2(x): return math.log(x,2)
 def oddp(x): return (x % 2) == 1
-
 
 def ditto(lst,old,mark="."):
   "Show 'mark' if an item of  lst is same as old."

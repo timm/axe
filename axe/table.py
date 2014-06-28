@@ -35,6 +35,7 @@ def table(source, rows = True, contents = row):
   for n,cells in contents(source):  
     if n == 0 : head(cells,t) 
     else      : body(cells,t,rows) 
+  #print ">>>>", t.headers
   return t
 
 ## Create Table 
@@ -61,15 +62,30 @@ def body(cells,t,rows=True):
   for header in t.headers:
     header + cells[header.col]
   if rows: 
-    t._rows += [cells]
+    t._rows += [Row(cells)]
 
-def clone(t) :
-  return head([h.name for h in t.headers],
+class Row(Thing):
+  def __init__(i,cells):
+    i.cells = cells
+
+def clone(t, discrete=False,rows=[]) :
+  def ok(x):
+    return x.replace("$",'') if discrete else x
+  t= head([ok(h.name) for h in t.headers],
               table0('copy of '+t.source))
-  
+  for cells in rows:  body(cells,t,True)
+  return t
+
+@demo
 def tabled(f='data/weather.csv'):
   t=table(f)
-  for x in  t.indep: print '\t',rprint(x)
+  for x in  t.indep: rprintln(x)
   #rprintln(t)
+
+@demo
+def tableCopied(f='data/weather.csv'):
+  t0=table(f)
+  t1=copyTable(t0)
+  rprintln([t0.nums,t1.nums]); 
 
 if __name__ == '__main__': eval(cmd())
