@@ -29,20 +29,15 @@ def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,
   here = Thing(t=t,kids=[],f=f,val=val,up=up,lvl=lvl,rows=rows,e=0)
   if f and opt.debug:
     print ('|.. ' * lvl) + f.name ,"=",val,len(rows)
-  here.mode=classStats(here).mode()
+  here.mode = classStats(here).mode()
   if lvl > 10 : return here
   toBe, splitter, syms,splits = bestFeature(rows,t)
   if not toBe < asIs: return here
-  here.e = e= sum(syms[key].ent() for key in splits.keys())
-  
-  if 1:
-    for key in sorted(splits.keys()):
-      someRows = splits[key] 
-      #if f:
-       # print('??? '* (lvl+1) + str(key) +"="+str(val)+ '; ' + 
-      if len(someRows) > opt.min and len(someRows) < len(rows)  and syms[key].ent():
-        here.kids += [tdiv1(t,someRows,lvl+1,asIs=toBe,
-                            up=here,f=splitter,val=key,opt=opt)]
+  for key in sorted(splits.keys()):
+    someRows = splits[key] 
+    if len(someRows) > opt.min and len(someRows) < len(rows)  and syms[key].ent():
+      here.kids += [tdiv1(t,someRows,lvl+1,asIs=toBe,
+                          up=here,f=splitter,val=key,opt=opt)]
   return here
 
 def tdiv(t,rows,opt=The.tree):
