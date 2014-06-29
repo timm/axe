@@ -9,9 +9,9 @@ class Thing():
     i._id = Thing.id = Thing.id + 1
   def also(i,**d)  : return i.override(d)
   def override(i,d): i.__dict__.update(d); return i
-  def __hash__(i)  : return i._id
-  def __eq__(i,j)  : return i._id == j._id
-  def __neq__(i,j) : return i._id != j._id
+#  def __hash__(i)  : return i._id
+ # def __eq__(i,j)  : return i._id == j._id
+  #def __neq__(i,j) : return i._id != j._id
 
 The = Thing()
 def settings(f=None):
@@ -64,7 +64,9 @@ def readerings(): return Thing(
 
 @settings
 def treeings(**d): return Thing(
-  min=4).override(d)
+  min=4,
+  debug=False,
+  prune=True).override(d)
 
 @demo
 def thingsed(**d):

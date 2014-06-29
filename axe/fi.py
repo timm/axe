@@ -6,48 +6,55 @@ from table  import *
 import sys
 sys.dont_write_bytecode = True
 
-def discreteTable(f="data/diabetes.csv",contents=row):
+def discreteTable(f,contents=row):
   rows, t = [],  table0(f)
   for n,cells in contents(f):  
     if n==0 : head(cells,t) 
     else    : rows += [cells]
   for num in t.nums: 
-    for cut in ediv(rows,1 if num.name=="$insu" else 0,
+    for cut in ediv(rows,
                   num=lambda x:x[num.col],
                   sym=lambda x:x[t.klass[0].col]):
-      for row in cut._has:
+      print num.name, cut.at
+      for row in cut._has:  
         row[num.col] = cut.at
   return clone(t, discrete=True, rows=rows)
 
-def ediv(lst, watch, lvl=0,tiny=The.tree.min,
+@demo
+def _discreteTable(f="data/weather2.csv"):
+  for row in  discreteTable(f)._rows:
+    rprint(row)
+
+def ediv(lst, lvl=0,tiny=The.tree.min,
+         dull=The.math.brink.cohen,
          num=lambda x:x[0], sym=lambda x:x[1]):
-  "Divide lst of (numbers,symbols) using entropy."
+  "Divide lst of (numbers,symbols) using entropy."""
   #----------------------------------------------
-  print watch
+  #print watch
   def divide(this,lvl): # Find best divide of 'this' lst.
-    print watch
     def ke(z): return z.k()*z.ent()
-    lhs,rhs   = Sym(),Sym(sym(x) for x in this)
-    if watch: print '|.. ' * lvl
+    lhs,rhs   = Sym(), Sym(sym(x) for x in this)
     n0,k0,e0,ke0= 1.0*rhs.n,rhs.k(),rhs.ent(),ke(rhs)
     cut, least  = None, e0
+    last = num(this[0])
     for j,x  in enumerate(this): 
-      if lhs.n > tiny and rhs.n > tiny: 
-        maybe= lhs.n/n0*lhs.ent()+ rhs.n/n0*rhs.ent()
-        if maybe < least :  
-          gain = e0 - maybe
-          delta= log2(3**k0-2)-(ke0- ke(rhs)-ke(lhs))
-          if gain >= (log2(n0-1) + delta)/n0: 
-            cut,least = j,maybe
-      rhs - sym(x)
-      lhs + sym(x)    
+      rhs - sym(x); #nRhs - num(x)
+      lhs + sym(x); #nLhs + num(x)
+      now = num(x)
+      if now != last:
+        if lhs.n > tiny and rhs.n > tiny: 
+          maybe= lhs.n/n0*lhs.ent()+ rhs.n/n0*rhs.ent()       
+          if maybe < least : 
+            gain = e0 - maybe
+            delta= log2(3**k0-2)-(ke0- ke(rhs)-ke(lhs))
+            if gain >= (log2(n0-1) + delta)/n0: 
+              cut,least = j,maybe
+      last= now
     return cut,least
   #--------------------------------------------
   def recurse(this, cuts,lvl):
     cut,e = divide(this,lvl)
-    if watch == "1": print(num(x) for x in this)
     if cut: 
-      print this[:cut]
       recurse(this[:cut], cuts, lvl+1); 
       recurse(this[cut:], cuts, lvl+1)
     else:   
@@ -55,35 +62,6 @@ def ediv(lst, watch, lvl=0,tiny=The.tree.min,
     return cuts
   #---| main |-----------------------------------
   return recurse(sorted(lst,key=num),[],0)
-   
-@demo
-def _fi1(f="data/diabetes.csv",contents=row):
-  def discretize(rows,col,klass):
-    return ediv(rows, 
-                num = lambda row: row[col.col],
-                sym = lambda row: row[klass.col])
-  rows = []
-  t0   = table0(f)
-  for n,cells in contents(f):  
-    if n == 0 : head(cells,t0) 
-    else      : rows += [cells]
-  for num in t0.nums: 
-    #print num.name
-    for split in discretize(rows,num,t0.klass[0]):
-      print num.col, split.at, len(split._has)
-      for row in split._has:
-        row[num.col] = split.at
-  print ""
-  exit()
-  for row in t0._rows:
-    print row.cells
-  t1 = clone(t0,
-             discrete=True,
-             rows=rows)
-  print 1
-  rprint(t1.headers)
-  print 2
-@demo
   
 @demo
 def _ediv():
@@ -93,7 +71,7 @@ def _ediv():
   random.seed(1)
   def go(lst):
     print ""; print sorted(lst)[:10],"..."
-    for d in  ediv(lst):
+    for d in  ediv(lst,tiny=2):
       rprint(d); nl()
   X,Y="X","Y"
   l=[(1,X),(2,X),(3,X),(4,X),(11,Y),(12,Y),(13,Y),(14,Y)]

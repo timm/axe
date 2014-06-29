@@ -25,15 +25,16 @@ def say(x):
   sys.stdout.flush()
 def nl(): print ""
 
-def rprintln(x): 
-  return rprint(x,'\n')
-def rprint(x, end=None, dpth=-1):
+def rprintln(x):  return rprint1(x,'\n')
+def rprint(x)  :  return rprint1(x), nl()
+
+def rprint1(x, end=None, dpth=-1):
   if end : space='  '
   else   : dpth,end,space = 1,'',' '
   tabs = lambda n : space * n
   q = lambda z : '\"%s\"'%z if isa(z,str) else str(z)
   def what2show(keys):
-    return [k for k in sorted(keys) if not "_" in str(k)]
+    return [k for k in sorted(keys) if not "_" == str(k)[0]]
   if callable(x):
     say(tabs(dpth) + 'function' + end)
   elif isa(x,str) or nump(x):
@@ -46,19 +47,22 @@ def rprint(x, end=None, dpth=-1):
         say(( ' %s' % q(value))+ end)
       else: 
         say(end)
-        rprint(value, end, dpth + 1)
+        rprint1(value, end, dpth + 1)
   elif listp(x):
     if len(x) == 0:
       say(tabs(dpth) + '[]' + end)
     else:
       for something in x:
-        rprint(something, end, dpth+1)
+        rprint1(something, end, dpth+1)
+  elif x == None:
+    say(tabs(dpth)+ 'None' + end)
   else:
-    left,right,name = '(',')',x.__class__.__name__
-    if isa(x,Thing):
-      left,right,name='{','}',''
+    left,right,name = '{','}',x.__class__.__name__
+    name = "" if name == None else name
+#    if isa(x,Thing):
+ #     left,right,name='{','}',''
     say(tabs(dpth) + name + left + end)
-    rprint(x.__dict__, end, dpth+1)
+    rprint1(x.__dict__, end, dpth+1)
     say(tabs(dpth) + right + end)
 
 def align(lsts,sep=' '):

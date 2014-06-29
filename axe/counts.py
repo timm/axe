@@ -28,6 +28,7 @@ class Sym(Thing):
         if p: 
           e -= p*log2(p)
         i._also = Thing(most=most,mode=mode,e=e)
+        #print "also", i._also.e
     return i._also
 
 @test
