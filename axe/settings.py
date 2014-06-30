@@ -65,6 +65,7 @@ def readerings(): return Thing(
 @settings
 def treeings(**d): return Thing(
   min=4,
+  infoPrune=1,
   debug=False,
   prune=True).override(d)
 

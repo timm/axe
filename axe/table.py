@@ -49,6 +49,7 @@ def table0(source):
 def head(cells,t,numc=The.reader.numc):
   for col,cell in enumerate(cells):
     this   = Num if numc in cell else Sym
+    this.rank = 0
     header = this()
     header.col, header.name = col,cell
     t.at[cell] = header
@@ -68,7 +69,7 @@ class Row(Thing):
   def __init__(i,cells):
     i.cells = cells
 
-def clone(t, discrete=False,rows=[]) :
+def clone(t,rows=[],discrete=False) :
   def ok(x):
     return x.replace("$",'') if discrete else x
   t= head([ok(h.name) for h in t.headers],

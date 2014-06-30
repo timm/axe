@@ -12,10 +12,10 @@ def discreteTable(f,contents=row):
     if n==0 : head(cells,t) 
     else    : rows += [cells]
   for num in t.nums: 
-    for cut in ediv(rows,
+    for cut in  ediv(rows,
                   num=lambda x:x[num.col],
                   sym=lambda x:x[t.klass[0].col]):
-      print num.name, cut.at
+      #print num.name, cut.at
       for row in cut._has:  
         row[num.col] = cut.at
   return clone(t, discrete=True, rows=rows)
