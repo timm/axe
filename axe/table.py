@@ -67,7 +67,10 @@ def body(cells,t,rows=True):
 
 class Row(Thing):
   def __init__(i,cells):
+    i.newId()
     i.cells = cells
+    i.pos = []
+    i.x0,i.y0= 0,0
 
 def clone(t,rows=[],discrete=False) :
   def ok(x):

@@ -2,14 +2,16 @@ import sys
 sys.dont_write_bytecode = True 
 from demos import *
 
-class Thing():
+class Thing(object):
   id = -1
   def __init__(i,**fields) : 
     i.override(fields)
+    i.newId()
+  def newId(i):
     i._id = Thing.id = Thing.id + 1
   def also(i,**d)  : return i.override(d)
   def override(i,d): i.__dict__.update(d); return i
-#  def __hash__(i)  : return i._id
+  def __hash__(i) : return i._id
  # def __eq__(i,j)  : return i._id == j._id
   #def __neq__(i,j) : return i._id != j._id
 
@@ -52,6 +54,7 @@ def readerings(): return Thing(
   skip     ='?',
   showonly = '-',
   numc     ='$',
+  missing  = '?',
   patterns = {
     '\$'     : lambda z: z.nums,
     '\.'     : lambda z: z.syms,
@@ -68,6 +71,19 @@ def treeings(**d): return Thing(
   infoPrune=1,
   debug=False,
   prune=True).override(d)
+
+
+
+@settings
+def distings(**d): return Thing(
+  cells   = lambda x : x.cells,
+  what    = lambda x : x.indep,
+  missing = '?',
+  deep    = 10,
+  verbose = False,
+  tiny    = lambda t: len(t._rows)**0.5,
+  klass   = lambda x,t:x.cells[t.klass[0].col]
+  ).override(d)
 
 @demo
 def thingsed(**d):

@@ -18,6 +18,8 @@ def gs1(lst) : return map(g1,lst)
 def gs2(lst) : return map(g2,lst)
 def gs3(lst) : return map(g3,lst)
 
+def saysln(*lst):
+  say(', '.join(map(str, lst))); nl()
 def says(*lst):
   say(', '.join(map(str, lst)))
 def say(x): 
@@ -37,7 +39,7 @@ def rprint1(x, end=None, dpth=-1):
     return [k for k in sorted(keys) if not "_" == str(k)[0]]
   if callable(x):
     say(tabs(dpth) + 'function' + end)
-  elif isa(x,str) or nump(x):
+  elif x==None or isa(x,str) or nump(x)   or isa(x,bool):
     say(tabs(dpth) + q(x) + end)
   elif isa(x,dict):
     for key in what2show(x.keys()):
@@ -92,6 +94,16 @@ def atoms(str,sep=',', bad=The.string.white):
 
 def log2(x): return math.log(x,2)
 def oddp(x): return (x % 2) == 1
+def median(lst, ordered=False):
+  if not ordered: lst=sorted(lst)
+  n=len(lst)
+  if n==1: return lst[0]
+  if n==2: return (lst[0]+lst[1])*0.5
+  mid = int(n/2)
+  if oddp(n):
+    return lst[mid]
+  else:
+    return (lst[mid] + lst[mid+1]) * 0.5
 
 def ditto(lst,old,mark="."):
   "Show 'mark' if an item of  lst is same as old."

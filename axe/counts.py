@@ -5,7 +5,9 @@ sys.dont_write_bytecode = True
 
 # XXXX whatis k and why does Sym need it?
 class Sym(Thing):
-  def __init__(i,inits=[]): 
+  def __init__(i,inits=[],w=1):
+    i.newId()
+    i.w=w
     i.n,i.counts,i._also = 0,{},None
     for symbol in inits: i + symbol
   def __add__(i,symbol): i.inc(symbol,  1)
@@ -14,6 +16,9 @@ class Sym(Thing):
     i._also = None
     i.n += n
     i.counts[x] = i.counts.get(x,0) + n
+  def norm(i,x): return x
+  def dist(i,x,y): return 0 if x==y else 1
+  def far(i,x): return '~!@#$%^&*'
   def k(i)   : return len(i.counts.keys())
   def most(i): return i.also().most
   def mode(i): return i.also().mode
@@ -55,6 +60,7 @@ class Sample(Thing):
         i._cache[int(random.random()*i.opts.keep)] = x
   def all(i)    : return i._cache
   def median(i) : return i.also().median
+  def iqr(i)   : return i.also().iqr
   def breaks(i) : return i.also().breaks
   def also(i):
     if not i._also:
@@ -67,6 +73,7 @@ class Sample(Thing):
       if not oddp(n) : q = p + 1
       i._also = Thing(
         median = (lst[p] + lst[q])*0.5,
+        iqr    = lst[int(n*.75)] - lst[int(n*.5)],
         breaks = chops(lst, opts=i.opts,
                         sorted=True, dull=dull))
     return i._also
@@ -103,8 +110,10 @@ def sampled():
 
 class Num(Thing):
   "An accumulator for numbers"
-  def __init__(i,init=[], opts=The.sample):
+  def __init__(i,init=[], opts=The.sample,w=1):
+    i.newId()
     i.opts = opts
+    i.w=w
     i.zero()
     for x in init: i + x
   def zero(i):
@@ -113,11 +122,13 @@ class Num(Thing):
     i.n = i.mu = i.m2 = 0
   def __lt__(i,j): 
     return i.mu < j.mu
+  def n(i): return i.some.n
   def sd(i) :
     if i.n < 2: return i.mu
     else: 
       return (max(0,i.m2)/(i.n - 1))**0.5
   def median(i): return i.some.median()
+  def iqr(i): return i.some.iqr()
   def breaks(i): return i.some.breaks()
   def all(i)   : return i.some.all()
   def __add__(i,x):
@@ -135,6 +146,14 @@ class Num(Thing):
     delta = x - i.mu
     i.mu -= delta/(1.0*i.n)
     i.m2 -= delta*(x - i.mu) 
+  def dist(i,x,y,normalize=True):
+    if normalize:
+      x,y=i.norm(x),i.norm(y)
+    return (x-y)**2
+  def norm(i,x):
+    return (x - i.lo)/ (i.hi - i.lo + 0.00001)
+  def far(i,x):
+    return i.lo if x > (i.hi - i.lo)/2 else i.hi
   def t(i,j):
     signal = abs(i.mu - j.mu)
     noise  = (i.sd()**2/i.n + j.sd()**2/j.n)**0.5
