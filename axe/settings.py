@@ -80,10 +80,11 @@ def distings(**d): return Thing(
   what    = lambda x : x.indep,
   missing = '?',
   deep    = 10,
+  repeats = 10,
   verbose = False,
   cache   = True,
   some    = None,
-  err     = lambda p,a: abs(p-a)/a,
+  err     = lambda p,a: abs(p-a)/(a+0.001),
   tiny    = lambda t: len(t._rows)**0.5,
   klass   = lambda x,t,o:x.cells[t.klass[0].col],
   retry   = 10

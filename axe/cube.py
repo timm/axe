@@ -153,7 +153,7 @@ def weights(tbl0,opt,cr=0.3,f=0.5,size=30,big=0.5,lives0=5,better=lambda x,y: x 
 def loos(tbl,opt):
   score=Num()
   for test,train in loo(tbl,opt.some):
-    say(".")
+    #say(".")
     #weights(train,opt)
     relevant  = loos1(train,test,opt,score)
     got =   opt.how(relevant)
@@ -167,36 +167,43 @@ def loosMoea(tbl,opt):
     score = Num()
     score.h = h
     scores[h.col] = score
-  for test,train in loo(tbl,opt.some):
-    say(".")
-    cells = opt.cells(test)
-    neighbors = loos1(train,test,opt,score)
-    relevant = neighbors[0][2]
-    tbl1 = clone(tbl,[opt.cells(r) for r in relevant.rows])
-    for h in tbl1.less + tbl1.more:
-      got = h.median()
-      want= cells[h.col]
-      scores[h.col] + opt.err(got,want)
+  for repeat in range(opt.repeats):
+    says("\n",repeat," ")
+    for test,train in loo(tbl,opt.some):
+      #say(".")
+      cells = opt.cells(test)
+      neighbors = loos1(train,test,opt,score)
+      relevant = neighbors[0][2]
+      tbl1 = clone(tbl,[opt.cells(r) for r in relevant.rows])
+      for h in  tbl1.less + tbl1.more:
+        got = h.median()
+        want= cells[h.col]
+        scores[h.col] + opt.err(got,want)
   for score in scores.values():
     print score.h.name, score.median(), score.iqr()
-
+  
 def loos1(train,test,opt,score): 
   tree = idea(train,opt=opt)
   wsd  = sum(leaf.wsd for leaf in leaves(tree))
   first = None
   lives,n = opt.retry,0
+  #say("_")
   while lives > 1:
     n += 1
-    lives -= 1
+    better = False
     tree1 = idea(train,opt=opt)
     wsd1 = sum(leaf.wsd for leaf in leaves(tree1))
     first = first or wsd1
     if wsd1 < wsd:
-      lives = min(opt.retry,lives+opt.retry)
+      #say("+")
+      better = True
       wsd,tree = wsd1,tree1
+    #else: 
+      #say("-")
+    lives = opt.retry if better else lives - 1
     #print n,lives,first,wsd, int(100*wsd/first)
   ns = [len(l.rows) for l in leaves(tree)]
-  print ':clusters',len(ns),':using',sum(ns), ns
+  #print ':clusters',len(ns),':using',sum(ns), ns
   a = dist(train,test,tree.west,opt)
   b = dist(train,test,tree.east,opt)
   c = tree.c
@@ -211,8 +218,8 @@ def idea(tbl,rows=None,opt=distings(),up=None,lvl=0):
   return idea1(tbl,rows=rows,opt=opt,up=up,lvl=lvl)
 
 def idea1(t,rows=None,opt=distings(),up=None,lvl=0):
-  here   = Thing(t=t,_up=up,_kids=[],cuts=[],rows=rows,
-                 west=None,east=None,leafp=False)
+  here   = Thing(t=t,_up=up,_kids=[],rows=rows) #cuts=[],
+                 #west=None,east=None,leafp=False)
   if not rows:
     rows = t._rows
   west,east,c= opt.two(t,rows,opt)
@@ -251,7 +258,7 @@ def idea2(     t,here,rows,west,c,east,opt,lvl):
   for cut,sd,rows3 in sdiv(cache,tiny=opt.tiny(t)):
     some= [x[2] for x in rows3]
     if opt.tiny(t) < len(some) < len(rows) and sd < all.sd():
-      here.cuts  += [cut]
+      #here.cuts  += [cut]
       here._kids += [idea1(t,rows=some,
                          opt=opt,up=here,lvl=lvl+1)]
   return here
@@ -364,7 +371,7 @@ def ideaed(f='data/nasa93.csv'):
   opt= distings(
     klass = lambda x,t,o: x.cells[t.less[0].col],
     how   = nearest1,
-    tiny  = lambda x: 4,
+    #tiny  = lambda x: 4,
     two   = lambda x,y,z: mostDistant(x,y,z))
   #rprint(t.klass[0]); exit()
   t=idea(t,opt=opt)
@@ -392,9 +399,11 @@ def moea(f='data/coc81dem.csv'):
     klass = lambda x,t,o: fromHell(t,x,o),
     how   = nearest1,
     tiny  = lambda x: 10,
-    some  = 20,
+    some  = 100,
+    retry = 5,
+    repeats=10,
     two   =  twoDistant,
-    err   = lambda p,a: abs(p-a)/(a + 0.001)
+    #err   = lambda p,a: abs(p-a)/(a + 0.001)
   #rprint(t.klass[0]); exit()
   )
   loosMoea(t,opt)
