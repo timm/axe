@@ -60,8 +60,12 @@ def head(cells,t,numc=The.reader.numc):
   return t
 
 def body(cells,t,rows=True):
-  for header in t.headers:
-    header + cells[header.col]
+  #print "LEN?",len(t._rows)
+  for n,header in enumerate(t.headers):
+    cell = cells[header.col]
+    #print n,"!",cell,"!"
+    if not cell == The.reader.missing:
+      header + cell
   if rows: 
     t._rows += [Row(cells)]
 

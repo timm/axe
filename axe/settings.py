@@ -81,8 +81,12 @@ def distings(**d): return Thing(
   missing = '?',
   deep    = 10,
   verbose = False,
+  cache   = True,
+  some    = None,
+  err     = lambda p,a: abs(p-a)/a,
   tiny    = lambda t: len(t._rows)**0.5,
-  klass   = lambda x,t:x.cells[t.klass[0].col]
+  klass   = lambda x,t,o:x.cells[t.klass[0].col],
+  retry   = 10
   ).override(d)
 
 @demo

@@ -5,6 +5,10 @@ sys.dont_write_bytecode = True
 from demos    import *
 from settings import *
 
+def shuffle(lst):
+  random.shuffle(lst)
+  return lst
+
 rand = random.random
 any  = random.choice
 def seed(n = The.math.seed): random.seed(n)

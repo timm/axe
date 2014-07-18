@@ -9,7 +9,19 @@ sys.dont_write_bytecode = True
 def sides0(**also):
   return Thing().override(also)
 
+dists={}
 def dist(t,x,y,opt):
+  if not opt.cache:
+    return dist0(t,x,y,opt)
+  k1=(x._id,y._id)
+  k2=(y._id,x._id)
+  if k1 in dists:
+    return dists[k1]
+  tmp = dist0(t,x,y,opt)
+  dists[k1] = dists[k2] = tmp
+  return tmp
+
+def dist0(t,x,y,opt):
   d,n    = 0, 0.0001
   cellsX = opt.cells(x)
   cellsY = opt.cells(y)
@@ -73,27 +85,35 @@ def leaves(t):
   else:
     yield t
 
-def loo(tbl1):
+def loo(tbl1,some=None):
   rows = map(lambda x :x.cells,tbl1._rows)
+  if some:
+    rows = shuffle(rows)
   for n in xrange(len(rows)):
-    tbl2=clone(tbl1, rows[:n] + rows[n+1:])
-    yield Row(rows[n]),tbl2
+    if some and n < some:
+      tbl2=clone(tbl1, rows[:n] + rows[n+1:])
+      yield Row(rows[n]),tbl2
 
 def nearest1(ds):
   return ds[0][1]
 
 def nearest2(ds):
+  if len(ds)==1: return ds[0][1]
   d0,n0 = ds[0]; w0 = 1/d0
   d1,n1 = ds[1]; w1 = 1/d1
   ws    = w0 + w1
   return (w0*n0 + w1*n1)/ws
 
-def weights(tbl0,opt,cr=0.3,f=0.5,size=20,big=0.5):
+def weights(tbl0,opt,cr=0.3,f=0.5,size=30,big=0.5,lives0=5,better=lambda x,y: x < y,best0=10**32):
   def reweigh(new):
     for w,what in zip(new,opt.what(tbl)):
       what.w = w
   def candidate0():
     return [rand() for _ in opt.what(tbl)]
+  def move1(old,new):
+    j = random.randint(0,len(old))
+    new[j] = old[j]
+    return new  
   def zeroOne(x): return x % 1
   def score(new):
     reweigh(new)
@@ -101,71 +121,107 @@ def weights(tbl0,opt,cr=0.3,f=0.5,size=20,big=0.5):
     for _ in range(20):
       test   = any(tbl._rows)
       near,_ = closest(tbl,test,opt)
-      want   = opt.klass(test,tbl)
-      got    = opt.klass(near,tbl)
+      want   = opt.klass(test,tbl,opt)
+      got    = opt.klass(near,tbl,opt)
       s + abs(want - got)/(want + 0.00001)
     return s.median()
   tbl = clone(tbl0,[x.cells for x in tbl0._rows])
-  size = 30
   frontier = []
   for i in range(size):
     x = candidate0()
     frontier += [(score(x),x)]
-  lo  = 10**32
-  lives = 5
+  best = 10**32
+  lives = lives0
   while lives > 0:
-    lives -= 1
-    for i in range(len(frontier)):
+    inc = -1
+    for i in range(size):
       s0,old = frontier[i]
       new = []
-      for a,b,c in zip(any(frontier)[1],any(frontier)[1],any(frontier)[1]):
+      one = any(frontier)[1]
+      for a,b,c in zip(one,any(frontier)[1],any(frontier)[1]):
         new += [zeroOne(a + f*(b-c) if rand()< cr else a)]
+      new = move1(old,new)
       s1 = score(new)
-      if s1 < s0:
+      if better(s1,s0):
         frontier[i] = (s1,new)
-        if s1 < lo: 
-          lo    = s1
-          lives = min(5,lives+5)
-  ws = sorted(frontier)[0][1]
-  hi = max(ws)
-  ws = [0 if x < hi*big else x for x in ws]
-  reweigh(ws)
+        if better(s1,best): 
+          best = s1
+          inc  = lives0
+    lives += inc
+  reweigh(new)
 
 def loos(tbl,opt):
   score=Num()
-  for test,train in loo(tbl):
+  for test,train in loo(tbl,opt.some):
+    say(".")
     #weights(train,opt)
-    loos1(train,test,opt,score)
+    relevant  = loos1(train,test,opt,score)
+    got =   opt.how(relevant)
+    want = opt.klass(test,train,opt)
+    score + opt.err(got,want)
   return score
 
-def loos1(train,test,opt,score):
+def loosMoea(tbl,opt):
+  scores={}
+  for h in tbl.less + tbl.more:
+    score = Num()
+    score.h = h
+    scores[h.col] = score
+  for test,train in loo(tbl,opt.some):
+    say(".")
+    cells = opt.cells(test)
+    neighbors = loos1(train,test,opt,score)
+    relevant = neighbors[0][2]
+    tbl1 = clone(tbl,[opt.cells(r) for r in relevant.rows])
+    for h in tbl1.less + tbl1.more:
+      got = h.median()
+      want= cells[h.col]
+      scores[h.col] + opt.err(got,want)
+  for score in scores.values():
+    print score.h.name, score.median(), score.iqr()
+
+def loos1(train,test,opt,score): 
   tree = idea(train,opt=opt)
+  wsd  = sum(leaf.wsd for leaf in leaves(tree))
+  first = None
+  lives,n = opt.retry,0
+  while lives > 1:
+    n += 1
+    lives -= 1
+    tree1 = idea(train,opt=opt)
+    wsd1 = sum(leaf.wsd for leaf in leaves(tree1))
+    first = first or wsd1
+    if wsd1 < wsd:
+      lives = min(opt.retry,lives+opt.retry)
+      wsd,tree = wsd1,tree1
+    #print n,lives,first,wsd, int(100*wsd/first)
+  ns = [len(l.rows) for l in leaves(tree)]
+  print ':clusters',len(ns),':using',sum(ns), ns
   a = dist(train,test,tree.west,opt)
   b = dist(train,test,tree.east,opt)
   c = tree.c
   x1 = (a**2 + c**2 - b**2)/(2*c)
   y1 = max(0,(a**2 - x1**2))**0.5
   d = lambda  x2,y2: ((x1- x2)**2 + (y1 - y2)**2)**0.5
-  ds = [(d(leaf.x,leaf.y),leaf.z) 
+  ds = [(d(leaf.x,leaf.y),leaf.z,leaf) 
         for leaf in leaves(tree)]
-  ds  = sorted(ds)
-  got = opt.how(ds)
-  want = opt.klass(test,train)
-  mre  = abs(got - want)/want
-  score + mre
-  
-def idea(t,rows=None,opt=distings(),up=None,lvl=0):
+  return sorted(ds)
+ 
+def idea(tbl,rows=None,opt=distings(),up=None,lvl=0):
+  return idea1(tbl,rows=rows,opt=opt,up=up,lvl=lvl)
+
+def idea1(t,rows=None,opt=distings(),up=None,lvl=0):
   here   = Thing(t=t,_up=up,_kids=[],cuts=[],rows=rows,
                  west=None,east=None,leafp=False)
   if not rows:
     rows = t._rows
   west,east,c= opt.two(t,rows,opt)
-  return idea1(t,here,rows,west,c,east,opt,lvl)
+  return idea2(t,here,rows,west,c,east,opt,lvl)
 
-def idea1(     t,here,rows,west,c,east,opt,lvl):
+def idea2(     t,here,rows,west,c,east,opt,lvl):
   if lvl > opt.deep:
     return here
-  all= Num(opt.klass(row,t) for row in rows)
+  all= Num(opt.klass(row,t,opt) for row in rows)
   here.all=all
   if opt.verbose:   
     saysln('|..' * lvl,here._id,len(rows),
@@ -175,28 +231,45 @@ def idea1(     t,here,rows,west,c,east,opt,lvl):
     a = dist(t,row,west,opt)
     b = dist(t,row,east,opt)
     if a > c:
-      return idea1(t,here,rows,row, a,east,opt,lvl)
+      return idea2(t,here,rows,row, a,east,opt,lvl)
     if b > c:
-      return idea1(t,here,rows,west,b, row,opt,lvl)
+      return idea2(t,here,rows,west,b, row,opt,lvl)
     x = (a**2 + c**2 - b**2)/(2*c)
     if not row.x0:
       row.x0 = x
       row.y0 = max(0,a**2 - x**2)**0.5
-    cache += [(x,opt.klass(row,t),row)]
+    cache += [(x,opt.klass(row,t,opt),row)]
+    #cache += [(x,x,row)]
   xs = [row.x0 for row in rows]
   ys = [row.y0 for row in rows]
-  zs = [opt.klass(row,t) for row in rows]
-  here.x, here.y, here.z = g2(median(xs)),g2(median(ys)),g2(median(zs))
+  zs = all.median()
+  here.x, here.y, here.z = g2(median(xs)),g2(median(ys)),zs
   here.west = west
   here.east = east
   here.c    = c
+  here.wsd  = zs * len(rows)/len(t._rows)
   for cut,sd,rows3 in sdiv(cache,tiny=opt.tiny(t)):
     some= [x[2] for x in rows3]
     if opt.tiny(t) < len(some) < len(rows) and sd < all.sd():
       here.cuts  += [cut]
-      here._kids += [idea(t,rows=some,
+      here._kids += [idea1(t,rows=some,
                          opt=opt,up=here,lvl=lvl+1)]
   return here
+
+def fromHell(t,row,opt):
+  def val(what):
+    for h in what:
+      cell = opt.cells(row)[h.col]
+      if not cell == The.reader.missing:
+        yield h,h.w,h.norm(cell)
+  total = n = 0
+  for h,w, val in val(t.more):
+    total += w*(val**2)
+    n     += w
+  for h,w,val in val(t.less):
+    total += w*((1-val)**2)
+    n     += w
+  return total**2/n**2
 
 def sides(t,opt=distings()):
   one  = any(t._rows)
@@ -285,10 +358,11 @@ def _sdiv():
 
 @demo
 def ideaed(f='data/nasa93.csv'):
+  dists={}
   t=table(f)
   #seed(1)
   opt= distings(
-    klass = lambda x,t: x.cells[t.less[0].col],
+    klass = lambda x,t,o: x.cells[t.less[0].col],
     how   = nearest1,
     tiny  = lambda x: 4,
     two   = lambda x,y,z: mostDistant(x,y,z))
@@ -298,18 +372,40 @@ def ideaed(f='data/nasa93.csv'):
     print x._id, x.all.median(),x.all.iqr(),x.x,x.y,x.z
 
 def loosed(f='data/nasa93.csv'):
+  dists={}
   t=table(f)
   opt= distings(
-    klass = lambda x,t: x.cells[t.less[0].col],
+    klass = lambda x,t,o: x.cells[t.less[0].col],
     how   = nearest1,
+    tests = 5,
     #tiny  = lambda x: 8,
-    two   = lambda x,y,z: mostDistant(x,y,z))
+    two   =  twoDistant
   #rprint(t.klass[0]); exit()
+  )
   nums = loos(t,opt)
-  print nums.median(), nums.iqr()
+  print "", int(100*nums.median()), int(100*nums.iqr())#sorted(nums.all())
+
+def moea(f='data/coc81dem.csv'):
+  dists={}
+  t=table(f)
+  opt= distings(
+    klass = lambda x,t,o: fromHell(t,x,o),
+    how   = nearest1,
+    tiny  = lambda x: 10,
+    some  = 20,
+    two   =  twoDistant,
+    err   = lambda p,a: abs(p-a)/(a + 0.001)
+  #rprint(t.klass[0]); exit()
+  )
+  loosMoea(t,opt)
+ 
 
 @demo
 def sidesed(f='data/diabetes.csv'):
   t=table(f)
 
 if __name__ == '__main__': eval(cmd())
+
+# July 17
+# housing: 10m8 s nearest1 0.154 0.158
+#           9m8 s nearest2 0.170 0.134 (dist cache)
