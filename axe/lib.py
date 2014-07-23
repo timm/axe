@@ -13,6 +13,13 @@ rand = random.random
 any  = random.choice
 def seed(n = The.math.seed): random.seed(n)
 
+def first(x): return x[0]
+def second(x): return x[1]
+def third(x): return x[2]
+def fourth(x): return x[3]
+def fifth(x): return x[4]
+def last(x): return x[-1]
+
 ### printing
 
 def g1(x)    : return round(x,1)

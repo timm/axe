@@ -17,7 +17,7 @@ def discreteTable(f,contents=row):
                   sym=lambda x:x[t.klass[0].col]):
       #print num.name, cut.at
       for row in cut._has:  
-        row[num.col] = cut.at
+        row[num.col] = cut.range
   return clone(t, discrete=True, rows=rows)
 
 @demo
@@ -58,10 +58,16 @@ def ediv(lst, lvl=0,tiny=The.tree.min,
       recurse(this[:cut], cuts, lvl+1); 
       recurse(this[cut:], cuts, lvl+1)
     else:   
-      cuts += [Thing(at=num(this[0]),e=e,_has=this)]
+      cuts += [Thing(at=num(this[0]), e=e,_has=this)]
     return cuts
   #---| main |-----------------------------------
-  return recurse(sorted(lst,key=num),[],0)
+  lst = recurse(sorted(lst,key=num),[],0)
+  lo = float("-inf")
+  for n,item in enumerate(lst):
+    item.range = lo,item.at
+    lo = item.at
+  lst[-1].range = lo,float("inf")
+  return lst
   
 @demo
 def _ediv():

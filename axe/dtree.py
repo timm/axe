@@ -2,6 +2,8 @@ from __future__ import division
 from lib    import *
 from demos  import *
 from fi     import *
+from Abcd   import *
+
 import sys
 sys.dont_write_bytecode = True
 
@@ -23,12 +25,12 @@ def rankedFeatures(rows,t,features=None):
         e += val.n/n * val.ent()
     return e,f,syms,at
   return sorted(ranked(f) for f in features)
-         
+
 def infogain(t,opt=The.tree):
   def norm(x): return (x - lo)/(hi - lo+0.0001)
   lst = rankedFeatures(t._rows,t)
-  n   = int(len(lst)*opt.infoPrune)
-  return [f for _,f,x,y in lst[:n]]
+  n = int(len(lst)*opt.infoPrune)
+  return [f for e,f,syms,at in lst[:n]]
 
 def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,
                   f=None,val=None,opt=None):
@@ -39,18 +41,18 @@ def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,
   if lvl > 10 : return here
   if len(rows) < opt.min : return here
   if asIs==0: return here
-  toBe, splitter, syms,splits = rankedFeatures(rows,t,features)[0]
-  if not toBe < asIs: return here
+  toBe, splitter, syms,splits = rankedFeatures(rows,t,features)[0]  
+  if opt.variancePrune:
+    if not toBe < asIs: return here
   for key in sorted(splits.keys()):
     someRows = splits[key] 
-    if len(someRows) < len(rows) :
+    if opt.min <= len(someRows) < len(rows) :
       here.kids += [tdiv1(t,someRows,lvl=lvl+1,asIs=toBe,features=features,
                           up=here,f=splitter,val=key,opt=opt)]
   return here
 
 def tdiv(t,rows,opt=The.tree):
   features= infogain(t,opt)
-  print(len(features))
   n=tdiv1(t,rows,opt=opt,features=features)
   if opt.prune:
     modes(n)
@@ -78,7 +80,7 @@ def classStats(n):
   
 def showTdiv(n,lvl=-1):  
   if n.f:
-    say(('|..' * lvl)+str(n.f.name)+"=" +str(n.val) +  "\t"+str(n.mode)+" #"+str(nmodes(n)))
+    say(('|..' * lvl)+str(n.f.name)+"=" +str(n.val) +  "\t:"+str(n.mode)+" #"+str(nmodes(n)))
   if n.kids: 
     nl();
     for k in n.kids: 
@@ -87,14 +89,99 @@ def showTdiv(n,lvl=-1):
     s=classStats(n)
     print ' '+str(int(100*s.counts[s.mode()]/len(n.rows)))+'% * '+str(len(n.rows))
 
+def nodes(tree):
+  if tree:
+    yield tree
+    for kid in tree.kids:
+      for sub in nodes(kid):
+        yield sub
+
+def leaves(tree):
+  for node in nodes(tree):
+    print "K>", str(tree.kids)
+    if not tree.kids:
+      yield node
+
+#if tree:   
+ #   if tree.kids:
+  #    for kid in tree.kids:
+   #     for leaf in leaves(kid):
+    #      yield leaf
+    #else:
+     # yield tree
+
+def xval(tbl,m=5,n=5,opt=The.tree):
+  cells = map(lambda row: opt.cells(row), tbl._rows)
+  for i in range(m):
+    say("*")
+    cells = shuffle(cells)
+    div = len(cells)//n
+    for j in range(n):
+      say("+")
+      lo = j*div
+      hi = lo + div
+      train = clone(tbl,cells[:lo]+cells[hi:])
+      test  = map(Row,cells[lo:hi])
+      yield test,train
+  
+def classify1(cells,tree,opt=The.tree):
+  def equals(val,span):
+    if val == opt.missing : return True
+    elif val == span      : return True
+    else:
+      lo,hi = span
+      return lo <= val < hi
+  found = False
+  for kid in tree.kids:
+    col = kid.f.col
+    val = cells[col]
+    if equals(val,kid.val):
+      for sub in classify1(cells,kid,opt):
+        found = True
+        yield sub
+  if not found:
+    yield tree
+
+
+def classify(test,tree,opt=The.tree):
+  all= [(len(x.rows),x.mode) 
+        for x in classify1(opt.cells(test),tree,opt)]
+  return second(last(sorted(all)))
+
+def rows1(row,tbl,cells=lambda r: r.cells):
+  print ""
+  for h,cell in zip(tbl.headers,cells(row)):
+    print h.col, ") ", h.name,cell
+
 @demo
 def tdived(file='data/diabetes.csv'):
   t = discreteTable(file)  
   #exit()
-  showTdiv(tdiv(t,t._rows))
-  infogain(t)
-
-
-
+  tree= tdiv(t,t._rows)
+  showTdiv(tree)
+ 
+ 
+@demo
+def cross(file='data/housingD.csv'):
+  def klass(test):
+    return test.cells[train.klass[0].col]
+  tbl = discreteTable(file)
+  n=0
+  abcd=Abcd()
+  for tests, train in xval(tbl):
+     tree=tdiv(train,train._rows)
+     print ":nodes" , len([n for n in nodes(tree)]), \
+           ":leaves", len([n for n in leaves(tree)])
+     showTdiv(tree)
+     print [l for l in nodes(tree)] 
+     exit()
+     for test in tests:
+       want = klass(test)
+       got= classify(test,tree)
+       abcd(want,got)
+  nl()
+  abcd.header()
+  abcd.report()
+  
 if __name__ == '__main__': eval(cmd())
 
