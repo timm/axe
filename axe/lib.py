@@ -5,6 +5,13 @@ sys.dont_write_bytecode = True
 from demos    import *
 from settings import *
 
+def overlap(xs,ys):
+  n = 0
+  for x,y in zip(xs,ys):
+    if x == y:
+      n += 1
+  return n / len(xs)
+
 def shuffle(lst):
   random.shuffle(lst)
   return lst

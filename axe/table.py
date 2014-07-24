@@ -38,6 +38,9 @@ def table(source, rows = True, contents = row):
   #print ">>>>", t.headers
   return t
 
+def centroid(tbl,selections=False):
+  return [h.centroid() for h in tbl.headers if (not selections or h.selected)]
+
 ## Create Table 
 def table0(source):
   return Thing(
@@ -76,13 +79,16 @@ class Row(Thing):
     i.pos = []
     i.x0,i.y0= 0,0
 
-def clone(t,rows=[],discrete=False) :
+def clone(tbl1,rows=[],discrete=False,keepSelections=False) :
   def ok(x):
     return x.replace("$",'') if discrete else x
-  t= head([ok(h.name) for h in t.headers],
-              table0('copy of '+t.source))
-  for cells in rows:  body(cells,t,True)
-  return t
+  tbl2= head([ok(h.name) for h in tbl1.headers],
+             table0('copy of '+tbl1.source))
+  if keepSelections:
+    for h in tbl1.headers:
+      tbl2.headers[h.col].selected = h.selected
+  for cells in rows:  body(cells,tbl2,True)
+  return tbl2
 
 @demo
 def tabled(f='data/weather.csv'):

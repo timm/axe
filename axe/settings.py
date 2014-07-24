@@ -69,7 +69,7 @@ def readerings(): return Thing(
 def treeings(**d): return Thing(
   min=4,
   infoPrune=0.25,
-  variancePrune=False,
+  variancePrune=True,
   debug=False,
   missing = '?',
   cells = lambda x: x.cells,

@@ -7,6 +7,7 @@ sys.dont_write_bytecode = True
 class Sym(Thing):
   def __init__(i,inits=[],w=1):
     i.newId()
+    i.selected=False
     i.w=w
     i.n,i.counts,i._also = 0,{},None
     for symbol in inits: i + symbol
@@ -20,6 +21,7 @@ class Sym(Thing):
   def dist(i,x,y): return 0 if x==y else 1
   def far(i,x): return '~!@#$%^&*'
   def k(i)   : return len(i.counts.keys())
+  def centroid(i): return i.mode()
   def most(i): return i.also().most
   def mode(i): return i.also().mode
   def ent(i) : return i.also().e
@@ -112,6 +114,7 @@ class Num(Thing):
   "An accumulator for numbers"
   def __init__(i,init=[], opts=The.sample,w=1):
     i.newId()
+    i.selected=False
     i.opts = opts
     i.w=w
     i.zero()
@@ -127,6 +130,7 @@ class Num(Thing):
     if i.n < 2: return i.mu
     else: 
       return (max(0,i.m2)/(i.n - 1))**0.5
+  def centroid(i): return i.median()
   def median(i): return i.some.median()
   def iqr(i): return i.some.iqr()
   def breaks(i): return i.some.breaks()
