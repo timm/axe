@@ -5,6 +5,19 @@ sys.dont_write_bytecode = True
 from demos    import *
 from settings import *
 
+def prefer(pairs1,pairs2,key = lambda x:x):
+  out = {}
+  for k,val in pairs1:
+    k = key(k)
+    out[k] = val
+  for k,(a1,b1) in pairs2:
+    k = key(k)
+    if k in out:
+      a2,b2=out[k]
+      if a1 == a2 and b1 == b2:
+        del out[k]
+  return out
+
 def overlap(xs,ys):
   n = 0
   for x,y in zip(xs,ys):
@@ -41,6 +54,7 @@ def saysln(*lst):
 def says(*lst):
   say(', '.join(map(str, lst)))
 def say(x): 
+  return True
   sys.stdout.write(str(x))
   sys.stdout.flush()
 def nl(): print ""

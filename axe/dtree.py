@@ -37,9 +37,9 @@ def infogain(t,opt=The.tree):
     f.selected=True
   return [f for e,f,syms,at in lst[:n]]
 
-def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,
+def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,branch=[],
                   f=None,val=None,opt=None):
-  here = Thing(t=t,kids=[],f=f,val=val,up=up,lvl=lvl,rows=rows,modes={})
+  here = Thing(t=t,kids=[],f=f,val=val,up=up,lvl=lvl,rows=rows,modes={},branch=branch)
   if f and opt.debug: 
     print ('|.. ' * lvl) + f.name ,"=",val,len(rows)
   here.mode = classStats(here).mode()
@@ -53,13 +53,13 @@ def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,
         continue
     if opt.min <= len(someRows) < len(rows) :
       here.kids += [tdiv1(t,someRows,lvl=lvl+1,asIs=toBe,features=features,
-                          up=here,f=splitter,val=key,opt=opt)]
+                          up=here,f=splitter,val=key,branch=branch + [(splitter,key)],opt=opt)]
   return here
 
 def tdiv(t,rows,opt=The.tree):
   features= infogain(t,opt)
 #  opt.min = len(rows)**0.5
-  tree=tdiv1(t,rows,opt=opt,features=features)
+  tree=tdiv1(t,rows,opt=opt,features=features,branch=[])
   if opt.prune:
     modes(tree)
     prune(tree)
@@ -97,8 +97,7 @@ def showTdiv(n,lvl=-1):
 
 def dtnodes(tree):
   if tree:
-    if tree.up:
-      yield tree
+    yield tree
     for kid in tree.kids:
       for sub in dtnodes(kid):
         yield sub
@@ -155,10 +154,67 @@ def classify(test,tree,opt=The.tree):
         for x in classify1(opt.cells(test),tree,opt)]
   return second(last(sorted(all)))
 
+def improve(test,tree,opt=The.tree):
+  "find the most supported branch selected by test"
+  cells= opt.cells(test)
+  asIs= [(len(x.rows),x) 
+        for x in classify1(cells,tree,opt)]
+  one = second(last(sorted(asIs)))
+  new = old = one.mode
+  if test._id == 322060:
+    return '_0','_0'
+  if one.better:
+    for col,val in  one.better.items():
+      cells[col] = val
+    tobe= [(len(x.rows),x.mode) 
+           for x in classify1(cells,tree,opt)]
+    new = second(last(sorted(tobe)))
+  return old,new
+
 def rows1(row,tbl,cells=lambda r: r.cells):
   print ""
   for h,cell in zip(tbl.headers,cells(row)):
     print h.col, ") ", h.name,cell
+
+def snakesAndLadders(tree,train,w):
+  def klass(x): return x.cells[train.klass[0].col]
+  def l2t(l)  : return l.tbl
+  def xpect(tbl): return tbl.klass[0].centroid()
+  def score(l): return w[xpect(l2t(l))]
+  for node in dtnodes(tree):
+    node.tbl = clone(train,
+                     rows=map(lambda x:x.cells,node.rows),
+                     keepSelections=True)
+    node.tbl.centroid= centroid(node.tbl,selections=True)
+  for node1 in dtnodes(tree):
+    id1 = node1._id
+    node1.far = []
+    node1.snake=None; node1.worse=[]
+    node1.ladder=None; node1.better=[]
+    for node2 in dtnodes(tree):
+      #if id1 > node2._id:
+        sames = overlap(node1.tbl.centroid, node2.tbl.centroid)
+        node1.far += [(sames,node2)]
+        #node2.far += [(sames,node1)]
+  for node1 in dtnodes(tree):
+    # sorted in reverse order of distance
+    node1.far = sorted(node1.far,
+                        key= lambda x: first(x)) 
+    # at end of this loop, the last ladder, snakes are closest
+    for _,node2 in node1.far:
+      if score(node2) > score(node1):
+        say(">")
+        node1.ladder = node2
+        node1.better = prefer(node2.branch,node1.branch,key=lambda x:x.col)
+        say(len(node1.better))
+      if score(node2) < score(node1):
+        say("<")
+        node1.snake = node2
+        node1.worse = prefer(node2.branch,node1.branch,key=lambda x:x.col)
+        say(len(node1.worse))
+  for node in dtnodes(tree):
+    snake = node.snake._id if node.snake else None
+    ladder = node.ladder._id if node.ladder else None
 
 @demo
 def tdived(file='data/diabetes.csv'):
@@ -180,12 +236,15 @@ def cross(file='data/housingD.csv',rseed=1):
   nNodes=Num()
   for tests, train in xval(tbl):
      tree = tdiv(train,train._rows)
+     for node in dtnodes(tree):
+       print node.branch
      nLeaves + len([n for n in dtleaves(tree)])
      nNodes +  len([n for n in dtnodes(tree)])
      for test in tests:
        want = klass(test)
        got  = classify(test,tree)
        abcd(want,got)
+     exit()
   nl()
   abcd.header()
   abcd.report()
@@ -193,46 +252,29 @@ def cross(file='data/housingD.csv',rseed=1):
   print ":leaves",sorted(nLeaves.some.all())
 
 @demo
-def snl(file='data/housingD.csv',rseed=1,w=dict(_1=0,_0=1)):
-  
+def snl(file='data/housingD.csv',rseed=1,w=dict(_1=0,_0=1)):  
+  def klass(x): return x.cells[train.klass[0].col]
   seed(rseed)
   tbl = discreteTable(file)
   abcd=Abcd()
-  def klass(x): return x.cells[train.klass[0].col]
-  def l2t(l)  : return l.tbl
-  def xpect(tbl): return tbl.klass[0].centroid()
-  def score(l): return w[xpect(l2t(l))]
+  old=Sym()
+  new=Sym()
   for tests, train in xval(tbl):
      tree = tdiv(train,train._rows)
      #print "1>",[h.col for h in train.headers if h.selected]
-     nodes = [node for node in dtnodes(tree)]
-     for node in nodes:
-       node.tbl = clone(train,
-                        rows=map(lambda x:x.cells,node.rows),
-                        keepSelections=True)
-       node.tbl.centroid= centroid(node.tbl,selections=True)
-     for node1 in nodes:
-       id1 = node1._id
-       node1.near = []
-       for node2 in nodes:
-         id2 =  node2._id
-         if id1 > id2:
-           delta = overlap(node1.tbl.centroid,node2.tbl.centroid)
-           score12    = score(node2) - score(node1)
-           score21    = score(node1) - score(node2)
-           node1.near += [(delta,node2,xpect(l2t(node2)),score12)]
-           node2.near += [(delta,node1,xpect(l2t(node2)),score21)]
-     for node in nodes:
-       node.near = sorted(node.near,key= lambda x: -1*first(x)) 
-       print ""
-       for x in node.near: print "\t",x
+     snakesAndLadders(tree,train,w)
      for test in tests:
        want = klass(test)
-       got  = classify(test,tree)
-       abcd(want,got)
-  nl()
-  abcd.header()
-  abcd.report()
+       a,b  = improve(test,tree)
+       old + a
+       new + b
+       #exit()
+       #abcd(want,got)
+  print "\n",old.counts, new.counts
+     #exit()
+  #nl()
+  #abcd.header()
+  #abcd.report()
   
 if __name__ == '__main__': eval(cmd())
 
