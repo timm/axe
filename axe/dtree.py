@@ -3,6 +3,7 @@ from lib    import *
 from demos  import *
 from fi     import *
 from Abcd   import *
+from learn  import *
 
 import sys
 sys.dont_write_bytecode = True
@@ -56,10 +57,11 @@ def tdiv1(t,rows,lvl=-1,asIs=10**32,up=None,features=None,branch=[],
                           up=here,f=splitter,val=key,branch=branch + [(splitter,key)],opt=opt)]
   return here
 
-def tdiv(t,rows,opt=The.tree):
-  features= infogain(t,opt)
+def tdiv(tbl,rows=None,opt=The.tree):
+  rows = rows or tbl._rows
+  features= infogain(tbl,opt)
 #  opt.min = len(rows)**0.5
-  tree=tdiv1(t,rows,opt=opt,features=features,branch=[])
+  tree = tdiv1(tbl,rows,opt=opt,features=features,branch=[])
   if opt.prune:
     modes(tree)
     prune(tree)
@@ -86,7 +88,8 @@ def classStats(n):
   
 def showTdiv(n,lvl=-1):  
   if n.f:
-    says(n.id,('|..' * lvl)+str(n.f.name)+"=" +str(n.val) +  "\t:"+str(n.mode)+" #"+str(nmodes(n)))
+    say( ('|..' * lvl) + str(n.f.name)+ "="+str(n.val) + \
+         "\t:" + str(n.mode) +  " #" + str(nmodes(n)))
   if n.kids: 
     nl();
     for k in n.kids: 
@@ -116,59 +119,63 @@ def dtleaves(tree):
     #else:
      # yield tree
 
-def xval(tbl,m=5,n=5,opt=The.tree):
+def xval(tbl,m=None,n=None,opt=The.tree):
+  m = m or The.tree.m
+  n = n or The.tree.n
   cells = map(lambda row: opt.cells(row), tbl._rows)
+  all = m*n
   for i in range(m):
-    say("*")
+    print "*" * all
     cells = shuffle(cells)
     div = len(cells)//n
     for j in range(n):
-      say("+")
+      all -= 1
       lo = j*div
       hi = lo + div
       train = clone(tbl,cells[:lo]+cells[hi:])
       test  = map(Row,cells[lo:hi])
       yield test,train
   
-def classify1(cells,tree,opt=The.tree):
+def apex(test,tree,opt=The.tree):
+  """apex=  leaf at end of biggest (most supported) 
+   branch that is selected by test in a tree"""
   def equals(val,span):
-    if val == opt.missing : return True
-    elif val == span      : return True
+    if val == opt.missing or val==span:
+      return True
     else:
       lo,hi = span
       return lo <= val < hi
-  found = False
-  for kid in tree.kids:
-    col = kid.f.col
-    val = cells[col]
-    if equals(val,kid.val):
-      for sub in classify1(cells,kid,opt):
-        found = True
-        yield sub
-  if not found:
-    yield tree
+  def apex1(cells,tree):
+    found = False
+    for kid in tree.kids:
+      val = cells[kid.f.col]
+      if equals(val,kid.val):
+        for leaf in apex1(cells,kid):
+          found = True
+          yield leaf
+    if not found:
+      yield tree
+  leaves= [(len(leaf.rows),leaf) 
+           for leaf in apex1(opt.cells(test),tree)]
+  return second(last(sorted(leaves)))
 
 def classify(test,tree,opt=The.tree):
-  "find the most supported branch selected by test"
-  all= [(len(x.rows),x.mode) 
-        for x in classify1(opt.cells(test),tree,opt)]
-  return second(last(sorted(all)))
+  return apex(test,tree,opt=The.tree).mode
 
-def improve(test,tree,opt=The.tree):
-  "find the most supported branch selected by test"
-  cells= opt.cells(test)
-  asIs= [(len(x.rows),x) 
-        for x in classify1(cells,tree,opt)]
-  one = second(last(sorted(asIs)))
-  new = old = one.mode
-  if test._id == 322060:
-    return '_0','_0'
-  if one.better:
-    for col,val in  one.better.items():
-      cells[col] = val
-    tobe= [(len(x.rows),x.mode) 
-           for x in classify1(cells,tree,opt)]
-    new = second(last(sorted(tobe)))
+def improve(test,tree,opt=The.tree) :
+  return change(test,tree,opt.better,opt)
+
+def degrade(test,tree,opt=The.tree) :
+  return change(test,tree,opt.worse,opt)
+
+def change(test,tree,how,opt=The.tree):
+  leaf  = apex(test,tree,opt)
+  new   = old = leaf.mode
+  if how(leaf):
+    copy = opt.cells(test)[:]
+    for col,val in  how(leaf).items():
+      copy[col] = val
+    new = classify(Row(copy),tree,opt)
   return old,new
 
 def rows1(row,tbl,cells=lambda r: r.cells):
@@ -203,24 +210,21 @@ def snakesAndLadders(tree,train,w):
     # at end of this loop, the last ladder, snakes are closest
     for _,node2 in node1.far:
       if score(node2) > score(node1):
-        say(">")
         node1.ladder = node2
         node1.better = prefer(node2.branch,node1.branch,key=lambda x:x.col)
-        say(len(node1.better))
+        
       if score(node2) < score(node1):
-        say("<")
         node1.snake = node2
         node1.worse = prefer(node2.branch,node1.branch,key=lambda x:x.col)
-        say(len(node1.worse))
   for node in dtnodes(tree):
     snake = node.snake._id if node.snake else None
     ladder = node.ladder._id if node.ladder else None
 
 @demo
 def tdived(file='data/diabetes.csv'):
-  t = discreteTable(file)  
+  tbl = discreteTable(file)  
   #exit()
-  tree,_= tdiv(t,t._rows)
+  tree,_= tdiv(tbl)
   showTdiv(tree)
  
  
@@ -235,7 +239,7 @@ def cross(file='data/housingD.csv',rseed=1):
   nLeaves=Num()
   nNodes=Num()
   for tests, train in xval(tbl):
-     tree = tdiv(train,train._rows)
+     tree = tdiv(train)
      for node in dtnodes(tree):
        print node.branch
      nLeaves + len([n for n in dtleaves(tree)])
@@ -251,30 +255,46 @@ def cross(file='data/housingD.csv',rseed=1):
   print ":nodes",sorted(nNodes.some.all())
   print ":leaves",sorted(nLeaves.some.all())
 
+ninf = float("-inf")
 @demo
-def snl(file='data/housingD.csv',rseed=1,w=dict(_1=0,_0=1)):  
+def snl(file='data/poi-1.5D.csv',rseed=1,w=dict(_1=0,_0=1)):  
   def klass(x): return x.cells[train.klass[0].col]
+  def val((x,y)):
+    return y if x == ninf else x
   seed(rseed)
+  nl(); print "#",file
   tbl = discreteTable(file)
-  abcd=Abcd()
-  old=Sym()
-  new=Sym()
+  tree0 = tdiv(tbl)
+  showTdiv(tree0); nl()
+  old, better, worse = Sym(), Sym(), Sym()
+  abcd1, abcd2  = Abcd(db=file,rx="where"), Abcd(db=file,rx="ranfor")
+  abcd3 = Abcd(db=file, rx="logref")
+  abcd4 = Abcd(db=file, rx="dt")
+  abcd5 = Abcd(db=file, rx="nb")
   for tests, train in xval(tbl):
-     tree = tdiv(train,train._rows)
-     #print "1>",[h.col for h in train.headers if h.selected]
+     learns(tests,train._rows,
+            indep=lambda row: map(val,row.cells[:-2]),
+            dep = lambda row: row.cells[-1],
+            rf  = abcd2,
+            lg  = abcd3,
+            dt  = abcd4,
+            nb  = abcd5),
+     tree = tdiv(train)
      snakesAndLadders(tree,train,w)
      for test in tests:
-       want = klass(test)
-       a,b  = improve(test,tree)
-       old + a
-       new + b
-       #exit()
-       #abcd(want,got)
-  print "\n",old.counts, new.counts
-     #exit()
-  #nl()
-  #abcd.header()
-  #abcd.report()
-  
+       abcd1(actual    = klass(test),
+            predicted = classify(test,tree))
+       a,b  = improve(test,tree); old + a; better + b
+       _,c  = degrade(test,tree);          worse  + c
+  print "\n:asIs",old.counts
+  print ":plan",better.counts
+  print ":warn",worse.counts
+  abcd1.header()
+  abcd1.report()
+  abcd2.report()
+  abcd3.report()
+  abcd4.report()
+  abcd5.report()
+
 if __name__ == '__main__': eval(cmd())
 

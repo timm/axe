@@ -50,11 +50,10 @@ def gs2(lst) : return map(g2,lst)
 def gs3(lst) : return map(g3,lst)
 
 def saysln(*lst):
-  say(', '.join(map(str, lst))); nl()
+  say(','.join(map(str, lst))); nl()
 def says(*lst):
-  say(', '.join(map(str, lst)))
+  say(','.join(map(str, lst)))
 def say(x): 
-  return True
   sys.stdout.write(str(x))
   sys.stdout.flush()
 def nl(): print ""

@@ -68,10 +68,14 @@ def readerings(): return Thing(
 @settings
 def treeings(**d): return Thing(
   min=4,
-  infoPrune=0.25,
+  infoPrune=0.33,
   variancePrune=True,
   debug=False,
+  m=5,
+  n=5,
   missing = '?',
+  better  = lambda x: x.better,
+  worse  = lambda x: x.worse,
   cells = lambda x: x.cells,
   prune=True).override(d)
 
