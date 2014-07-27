@@ -85,7 +85,7 @@ def distings(**d): return Thing(
   what    = lambda x : x.indep,
   missing = '?',
   deep    = 10,
-  repeats = 10,
+  repeats = 1,
   verbose = False,
   cache   = True,
   some    = None,

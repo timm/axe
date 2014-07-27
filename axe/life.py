@@ -10,17 +10,20 @@ def life(width=40,height=40,generations=500,prob=0.15,wait=0.1,seed=None):
     for x in range(xmax):
       for y in range(ymax):
         n = numpy.sum(a[max(x - 1, 0):min(x + 2, xmax), 
-                            max(y - 1, 0):min(y + 2, ymax)]) - a[x, y]
+                        max(y - 1, 0):min(y + 2, ymax)]) - a[x, y]
         if a[x, y]:
           if n < 2 or n > 3:
             b[x, y] = 0 # Rule 1 and 3
         elif n == 3:
           b[x, y] = 1 # Rule 4
     return(b)
+  def randoms(p):
+    for line in life:
+      for n in range(len(line)):
+        if line[n] != 1:
+          line[n] = 0 if random.random() > p else 1
   life = numpy.zeros((width, height), dtype=numpy.byte)
-  for line in life:
-    for n in range(len(line)):
-      line[n] = 0 if random.random() > prob else 1
+  randoms(prob)
   for i in range(generations):
     clear()
     print "generation:", i,"of",generations,"\n"
@@ -28,4 +31,7 @@ def life(width=40,height=40,generations=500,prob=0.15,wait=0.1,seed=None):
     print ""
     for line in life: 
       print ' '.join(map(stars,line))
+    randoms(prob/1000.0)
+    
     pause()
+

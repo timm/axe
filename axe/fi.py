@@ -3,10 +3,12 @@ from lib    import *
 from demos  import *
 from counts import *
 from table  import *
+
 import sys
 sys.dont_write_bytecode = True
 
-def discreteTable(f,contents=row):
+
+def discreteTable(f,contents=lambda x: row(x)):
   rows, t = [],  table0(f)
   for n,cells in contents(f):  
     if n==0 : head(cells,t) 

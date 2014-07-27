@@ -83,7 +83,7 @@ def atom(x):
     try : return float(x)
     except ValueError : return x
 
-def cmd(com="test()"):
+def cmd(com="life(1)"):
   "Convert command line to a function call."
   if len(sys.argv) < 2: return com
   def strp(x): return isinstance(x,basestring)

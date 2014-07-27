@@ -2,6 +2,7 @@ from __future__ import division
 from lib    import *
 from demos  import *
 from counts import *
+from dtree  import *
 import sys
 sys.dont_write_bytecode = True
 

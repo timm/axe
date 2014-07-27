@@ -3,6 +3,7 @@ from lib    import *
 from demos  import *
 from counts import *
 from table  import *
+from fi import *
 import sys
 sys.dont_write_bytecode = True
 
@@ -88,11 +89,10 @@ def leaves(t):
 def loo(tbl1,some=None):
   rows = map(lambda x :x.cells,tbl1._rows)
   if some:
-    rows = shuffle(rows)
+    rows = shuffle(rows)[:some]
   for n in xrange(len(rows)):
-    if some and n < some:
-      tbl2=clone(tbl1, rows[:n] + rows[n+1:])
-      yield Row(rows[n]),tbl2
+    tbl2=clone(tbl1, rows[:n] + rows[n+1:])
+    yield Row(rows[n]),tbl2
 
 def nearest1(ds):
   return ds[0][1]
@@ -155,6 +155,7 @@ def loos(tbl,opt):
   for test,train in loo(tbl,opt.some):
     #say(".")
     #weights(train,opt)
+    n+=1
     relevant  = loos1(train,test,opt,score)
     got =   opt.how(relevant)
     want = opt.klass(test,train,opt)
@@ -168,9 +169,8 @@ def loosMoea(tbl,opt):
     score.h = h
     scores[h.col] = score
   for repeat in range(opt.repeats):
-    says("\n",repeat," ")
+    print repeat
     for test,train in loo(tbl,opt.some):
-      #say(".")
       cells = opt.cells(test)
       neighbors = loos1(train,test,opt,score)
       relevant = neighbors[0][2]
@@ -185,11 +185,12 @@ def loosMoea(tbl,opt):
 def loos1(train,test,opt,score): 
   tree = idea(train,opt=opt)
   wsd  = sum(leaf.wsd for leaf in leaves(tree))
+  print [len(leaf.rows) for leaf in leaves(tree)]
   first = None
   lives,n = opt.retry,0
   #say("_")
   while lives > 1:
-    n += 1
+    n += 1; 
     better = False
     tree1 = idea(train,opt=opt)
     wsd1 = sum(leaf.wsd for leaf in leaves(tree1))
@@ -218,8 +219,7 @@ def idea(tbl,rows=None,opt=distings(),up=None,lvl=0):
   return idea1(tbl,rows=rows,opt=opt,up=up,lvl=lvl)
 
 def idea1(t,rows=None,opt=distings(),up=None,lvl=0):
-  here   = Thing(t=t,_up=up,_kids=[],rows=rows) #cuts=[],
-                 #west=None,east=None,leafp=False)
+  here   = Thing(t=t,_up=up,_kids=[],rows=rows)
   if not rows:
     rows = t._rows
   west,east,c= opt.two(t,rows,opt)
@@ -365,18 +365,37 @@ def _sdiv():
 
 @demo
 def ideaed(f='data/nasa93.csv'):
+  def change(x):
+    prefix=""
+    for ch in x:
+      if ch == ">": prefix="?"
+      if ch == "<": prefix="?"
+    return prefix + x
   dists={}
-  t=table(f)
+  tbl=table(f)
   #seed(1)
   opt= distings(
-    klass = lambda x,t,o: x.cells[t.less[0].col],
+    klass = lambda x,tbl,o: fromHell(tbl,x,o), #x.cells[tbl.less[0].col],
     how   = nearest1,
     #tiny  = lambda x: 4,
-    two   = lambda x,y,z: mostDistant(x,y,z))
-  #rprint(t.klass[0]); exit()
-  t=idea(t,opt=opt)
-  for x in leaves(t):
-    print x._id, x.all.median(),x.all.iqr(),x.x,x.y,x.z
+    two   = mostDistant
+    )
+    #two   = lambda x,y,z: twoDistant(x,y,z))
+  #rprint(tbl.klass[0]); exit()
+  tree=idea(tbl,opt=opt)
+  klass = Sym("=klass")
+  tbl2=head([change(h.name) for h in tbl.headers] + ["=__KLASS"],
+            table0("clusters of "+ f))
+  print [x.name for x in tbl2.headers]
+  for x in leaves(tree):
+    print ""
+    it = "_" + str(x._id)
+    for cells in [row.cells for row in x.rows]:
+      body(cells + [it],tbl2)
+  #for h in tbl2.headers:
+   # print h.name,h.counts if isinstance(h,Sym) else h.median()
+  #print tbl2._rows
+  tdiv(tbl2)
 
 def loosed(f='data/nasa93.csv'):
   dists={}
@@ -393,16 +412,17 @@ def loosed(f='data/nasa93.csv'):
   print "", int(100*nums.median()), int(100*nums.iqr())#sorted(nums.all())
 
 def moea(f='data/coc81dem.csv'):
+  seed(1)
   dists={}
   t=table(f)
   opt= distings(
     klass = lambda x,t,o: fromHell(t,x,o),
     how   = nearest1,
-    tiny  = lambda x: 10,
-    some  = 100,
-    retry = 5,
-    repeats=10,
-    two   =  twoDistant,
+    tiny  = lambda x: 4,
+    some  = 10000,
+    retry = 1,
+    repeats=1,
+    two   =  mostDistant,
     #err   = lambda p,a: abs(p-a)/(a + 0.001)
   #rprint(t.klass[0]); exit()
   )
