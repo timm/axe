@@ -1,11 +1,12 @@
 from __future__ import division
+import sys
+sys.dont_write_bytecode = True
+
 from lib    import *
 from demos  import *
 from counts import *
 from table  import *
-from fi import *
-import sys
-sys.dont_write_bytecode = True
+from fi     import *
 
 def sides0(**also):
   return Thing().override(also)
@@ -384,7 +385,7 @@ def ideaed(f='data/nasa93.csv'):
   #rprint(tbl.klass[0]); exit()
   tree=idea(tbl,opt=opt)
   klass = Sym("=klass")
-  tbl2=head([change(h.name) for h in tbl.headers] + ["=__KLASS"],
+  tbl2=head([change(h.name) for h in tbl.headers] + ["=KLASS"],
             table0("clusters of "+ f))
   print [x.name for x in tbl2.headers]
   for x in leaves(tree):
@@ -395,7 +396,10 @@ def ideaed(f='data/nasa93.csv'):
   #for h in tbl2.headers:
    # print h.name,h.counts if isinstance(h,Sym) else h.median()
   #print tbl2._rows
-  tdiv(tbl2)
+  tbl3= discreteNums(tbl2,[row.cells for row in tbl2._rows])
+  tree = tdiv(tbl3)
+  for node in dtleaves(tree):
+    print node.__dict__.keys()
 
 def loosed(f='data/nasa93.csv'):
   dists={}

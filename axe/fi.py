@@ -1,26 +1,11 @@
 from __future__ import division
+import sys
+sys.dont_write_bytecode = True
+
 from lib    import *
 from demos  import *
 from counts import *
 from table  import *
-
-import sys
-sys.dont_write_bytecode = True
-
-
-def discreteTable(f,contents=lambda x: row(x)):
-  rows, t = [],  table0(f)
-  for n,cells in contents(f):  
-    if n==0 : head(cells,t) 
-    else    : rows += [cells]
-  for num in t.nums: 
-    for cut in  ediv(rows,
-                  num=lambda x:x[num.col],
-                  sym=lambda x:x[t.klass[0].col]):
-      #print num.name, cut.at
-      for row in cut._has:  
-        row[num.col] = cut.range
-  return clone(t, discrete=True, rows=rows)
 
 @demo
 def _discreteTable(f="data/weather2.csv"):

@@ -80,6 +80,25 @@ class Row(Thing):
     i.pos = []
     i.x0,i.y0= 0,0
 
+
+def discreteTable(f,contents=lambda x: row(x)):
+  rows, t = [],  table0(f)
+  for n,cells in contents(f):  
+    if n==0 : head(cells,t) 
+    else    : rows += [cells]
+  return discreteNums(t,rows)
+
+def discreteNums(tbl,therows):
+  for num in tbl.nums: 
+    for cut in  ediv(therows,
+                   num=lambda x:x[num.col],
+                     sym=lambda x:x[tbl.klass[0].col]):
+      #print num.name, cut.at
+       for row in cut._has:  
+          row[num.col] = cut.range
+  return clone(tbl, discrete=True, rows=therows)
+
+
 def clone(tbl1,rows=[],discrete=False,keepSelections=False) :
   def ok(x):
     return x.replace("$",'') if discrete else x
