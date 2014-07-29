@@ -1,4 +1,3 @@
-import random
 
 def shuffle(lst):
   random.shuffle(lst)
