@@ -7,6 +7,7 @@ from demos  import *
 from counts import *
 from table  import *
 from fi     import *
+from dtree  import *
 
 def sides0(**also):
   return Thing().override(also)
@@ -105,51 +106,51 @@ def nearest2(ds):
   ws    = w0 + w1
   return (w0*n0 + w1*n1)/ws
 
-def weights(tbl0,opt,cr=0.3,f=0.5,size=30,big=0.5,lives0=5,better=lambda x,y: x < y,best0=10**32):
-  def reweigh(new):
-    for w,what in zip(new,opt.what(tbl)):
-      what.w = w
-  def candidate0():
-    return [rand() for _ in opt.what(tbl)]
-  def move1(old,new):
-    j = random.randint(0,len(old))
-    new[j] = old[j]
-    return new  
-  def zeroOne(x): return x % 1
-  def score(new):
-    reweigh(new)
-    s=Num()
-    for _ in range(20):
-      test   = any(tbl._rows)
-      near,_ = closest(tbl,test,opt)
-      want   = opt.klass(test,tbl,opt)
-      got    = opt.klass(near,tbl,opt)
-      s + abs(want - got)/(want + 0.00001)
-    return s.median()
-  tbl = clone(tbl0,[x.cells for x in tbl0._rows])
-  frontier = []
-  for i in range(size):
-    x = candidate0()
-    frontier += [(score(x),x)]
-  best = 10**32
-  lives = lives0
-  while lives > 0:
-    inc = -1
-    for i in range(size):
-      s0,old = frontier[i]
-      new = []
-      one = any(frontier)[1]
-      for a,b,c in zip(one,any(frontier)[1],any(frontier)[1]):
-        new += [zeroOne(a + f*(b-c) if rand()< cr else a)]
-      new = move1(old,new)
-      s1 = score(new)
-      if better(s1,s0):
-        frontier[i] = (s1,new)
-        if better(s1,best): 
-          best = s1
-          inc  = lives0
-    lives += inc
-  reweigh(new)
+# def weightsx(tbl0,opt,cr=0.3,f=0.5,size=30,big=0.5,lives0=5,better=lambda x,y: x < y,best0=10**32):
+#   def reweigh(new):
+#     for w,what in zip(new,opt.what(tbl)):
+#       what.w = w
+#   def candidate0():
+#     return [rand() for _ in opt.what(tbl)]
+#   def move1(old,new):
+#     j = random.randint(0,len(old))
+#     new[j] = old[j]
+#     return new  
+#   def zeroOne(x): return x % 1
+#   def score(new):
+#     reweigh(new)
+#     s=Num()
+#     for _ in range(20):
+#       test   = any(tbl._rows)
+#       near,_ = closest(tbl,test,opt)
+#       want   = opt.klass(test,tbl,opt)
+#       got    = opt.klass(near,tbl,opt)
+#       s + abs(want - got)/(want + 0.00001)
+#     return s.median()
+#   tbl = clone(tbl0,[x.cells for x in tbl0._rows])
+#   frontier = []
+#   for i in range(size):
+#     x = candidate0()
+#     frontier += [(score(x),x)]
+#   best = 10**32
+#   lives = lives0
+#   while lives > 0:
+#     inc = -1
+#     for i in range(size):
+#       s0,old = frontier[i]
+#       new = []
+#       one = any(frontier)[1]
+#       for a,b,c in zip(one,any(frontier)[1],any(frontier)[1]):
+#         new += [zeroOne(a + f*(b-c) if rand()< cr else a)]
+#       new = move1(old,new)
+#       s1 = score(new)
+#       if better(s1,s0):
+#         frontier[i] = (s1,new)
+#         if better(s1,best): 
+#           best = s1
+#           inc  = lives0
+#     lives += inc
+#   reweigh(new)
 
 def loos(tbl,opt):
   score=Num()
@@ -264,17 +265,17 @@ def idea2(     t,here,rows,west,c,east,opt,lvl):
                          opt=opt,up=here,lvl=lvl+1)]
   return here
 
-def fromHell(t,row,opt):
+def fromHell(tbl,row,opt):
   def val(what):
     for h in what:
       cell = opt.cells(row)[h.col]
       if not cell == The.reader.missing:
         yield h,h.w,h.norm(cell)
   total = n = 0
-  for h,w, val in val(t.more):
+  for h,w, val in val(tbl.more):
     total += w*(val**2)
     n     += w
-  for h,w,val in val(t.less):
+  for h,w,val in val(tbl.less):
     total += w*((1-val)**2)
     n     += w
   return total**2/n**2
@@ -374,6 +375,8 @@ def ideaed(f='data/nasa93.csv'):
     return prefix + x
   dists={}
   tbl=table(f)
+  print "P0>",[h.name for h in tbl.headers]
+  print centroid(tbl)
   #seed(1)
   opt= distings(
     klass = lambda x,tbl,o: fromHell(tbl,x,o), #x.cells[tbl.less[0].col],
@@ -385,21 +388,47 @@ def ideaed(f='data/nasa93.csv'):
   #rprint(tbl.klass[0]); exit()
   tree=idea(tbl,opt=opt)
   klass = Sym("=klass")
+  print "P>",[h.name for h in tbl.headers]
+  print "C>",centroid(tbl)
   tbl2=head([change(h.name) for h in tbl.headers] + ["=KLASS"],
             table0("clusters of "+ f))
-  print [x.name for x in tbl2.headers]
   for x in leaves(tree):
-    print ""
     it = "_" + str(x._id)
     for cells in [row.cells for row in x.rows]:
+      print cells
       body(cells + [it],tbl2)
-  #for h in tbl2.headers:
-   # print h.name,h.counts if isinstance(h,Sym) else h.median()
-  #print tbl2._rows
+  print "C2>",centroid(tbl2)
+  print [(h.name,h.n,h.sd()) for h in tbl2.less]
+  print [h.name for h in tbl2.klass]
   tbl3= discreteNums(tbl2,[row.cells for row in tbl2._rows])
   tree = tdiv(tbl3)
-  for node in dtleaves(tree):
-    print node.__dict__.keys()
+  #for node in dtleaves(tree):
+   # print ""
+    ##for h in node.t.headers: print h.mode(),h.most(),h.n
+    #print centroid(node.t)
+    #break
+  #exit()
+  #snakesAndLadders(tree,tbl3,
+   #                lambda node: medianFromHell(tbl3,node))
+  #for node in dtleaves(tree):
+   # print node.better,node.worse
+
+def medianFromHell(tbl,node):
+  def val(what):
+    for h in what:
+      cell = cells[h.col]
+      if not cell == The.reader.missing:
+        yield h, h.w, h.norm(cell[1])
+  total = n = 0
+  cells = centroid(tbl)
+  for h,w, val in val(tbl.more):
+    total += w*(val**2)
+    n     += w
+  for h,w,val in val(tbl.less):
+    total += w*((1-val)**2)
+    n     += w
+  print total, n, cells
+  return total**2/n**2
 
 def loosed(f='data/nasa93.csv'):
   dists={}

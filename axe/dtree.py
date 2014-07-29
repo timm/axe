@@ -1,12 +1,15 @@
 from __future__ import division
 from lib    import *
 from demos  import *
+from table import *
 from fi     import *
 from Abcd   import *
 from learn  import *
+from dtree  import *
 
 import sys
 sys.dont_write_bytecode = True
+
 
 def rankedFeatures(rows,t,features=None):
   features = features if features else t.indep
@@ -183,11 +186,20 @@ def rows1(row,tbl,cells=lambda r: r.cells):
   for h,cell in zip(tbl.headers,cells(row)):
     print h.col, ") ", h.name,cell
 
+
+
+
+
 def snakesAndLadders(tree,train,w):
   def klass(x): return x.cells[train.klass[0].col]
   def l2t(l)  : return l.tbl
   def xpect(tbl): return tbl.klass[0].centroid()
-  def score(l): return w[xpect(l2t(l))]
+  def score(l): 
+    if callable(w):
+      return w(l)
+    if isinstance(w,dict):
+      return w[xpect(l2t(l))]
+    return l
   for node in dtnodes(tree):
     node.tbl = clone(train,
                      rows=map(lambda x:x.cells,node.rows),

@@ -45,16 +45,17 @@ def ediv(lst, lvl=0,tiny=The.tree.min,
       recurse(this[:cut], cuts, lvl+1); 
       recurse(this[cut:], cuts, lvl+1)
     else:   
-      cuts += [Thing(at=num(this[0]), e=e,_has=this)]
+      half  = int(len(this)/2)
+      med   = num(this[half])
+      lo    = num(this[0])
+      hi    = num(this[-1])
+      cuts += [Thing(at=num(this[0]), 
+                     e=e,_has=this,
+                     med=med,
+                     range=(lo,med,hi))]
     return cuts
   #---| main |-----------------------------------
-  lst = recurse(sorted(lst,key=num),[],0)
-  lo = float("-inf")
-  for n,item in enumerate(lst):
-    item.range = lo,item.at
-    lo = item.at
-  lst[-1].range = lo,float("inf")
-  return lst
+  return recurse(sorted(lst,key=num),[],0)
   
 @demo
 def _ediv():

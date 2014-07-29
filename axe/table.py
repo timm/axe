@@ -2,7 +2,8 @@ from __future__ import division
 from lib    import *
 from demos  import *
 from counts import *
-from dtree  import *
+from fi     import *
+
 import sys
 sys.dont_write_bytecode = True
 
@@ -89,12 +90,13 @@ def discreteTable(f,contents=lambda x: row(x)):
   return discreteNums(t,rows)
 
 def discreteNums(tbl,therows):
-  for num in tbl.nums: 
-    for cut in  ediv(therows,
-                   num=lambda x:x[num.col],
-                     sym=lambda x:x[tbl.klass[0].col]):
+  for num in tbl.indep:
+    if isinstance(num,Num):
+      for cut in  ediv(therows,
+                       num=lambda x:x[num.col],
+                       sym=lambda x:x[tbl.klass[0].col]):
       #print num.name, cut.at
-       for row in cut._has:  
+        for row in cut._has:  
           row[num.col] = cut.range
   return clone(tbl, discrete=True, rows=therows)
 
@@ -109,6 +111,7 @@ def clone(tbl1,rows=[],discrete=False,keepSelections=False) :
       tbl2.headers[h.col].selected = h.selected
   for cells in rows:  body(cells,tbl2,True)
   return tbl2
+
 
 @demo
 def tabled(f='data/weather.csv'):
