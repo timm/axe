@@ -49,7 +49,7 @@ def rands(*lst):
     except Klash as k:
       if tries < 0: 
         raise k
-      
+
 def rors(*lst):
   tries = 5
   while True:
