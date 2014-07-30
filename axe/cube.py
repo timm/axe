@@ -265,6 +265,13 @@ def idea2(     t,here,rows,west,c,east,opt,lvl):
                          opt=opt,up=here,lvl=lvl+1)]
   return here
 
+def fromHells(tbl,rows,opt):
+  s =  n = 0
+  for row in rows:
+    s += fromHell(tbl,row,opt)
+    n += 1
+  return s/n
+
 def fromHell(tbl,row,opt):
   def val(what):
     for h in what:
@@ -368,67 +375,59 @@ def _sdiv():
 @demo
 def ideaed(f='data/nasa93.csv'):
   def change(x):
-    prefix=""
+    prefix=suffix=""
     for ch in x:
-      if ch == ">": prefix="?"
-      if ch == "<": prefix="?"
-    return prefix + x
+      if ch == ">": prefix="?"; suffix="/"
+      if ch == "<": prefix="?"; suffix="/"
+    return prefix + x + suffix
   dists={}
   tbl=table(f)
-  print "P0>",[h.name for h in tbl.headers]
-  print centroid(tbl)
-  #seed(1)
   opt= distings(
-    klass = lambda x,tbl,o: fromHell(tbl,x,o), #x.cells[tbl.less[0].col],
+    klass = lambda x,tbl,o: fromHell(tbl,x,o), 
     how   = nearest1,
-    #tiny  = lambda x: 4,
     two   = mostDistant
     )
-    #two   = lambda x,y,z: twoDistant(x,y,z))
-  #rprint(tbl.klass[0]); exit()
-  tree=idea(tbl,opt=opt)
+  tree1 = idea(tbl,opt=opt)
   klass = Sym("=klass")
-  print "P>",[h.name for h in tbl.headers]
-  print "C>",centroid(tbl)
-  tbl2=head([change(h.name) for h in tbl.headers] + ["=KLASS"],
-            table0("clusters of "+ f))
-  for x in leaves(tree):
+  names = [change(h.name) for h in tbl.headers] + ["=KLASS"]
+  tbl2=head(names,table0("clusters of "+ f))
+  for x in leaves(tree1):
     it = "_" + str(x._id)
-    for cells in [row.cells for row in x.rows]:
-      print cells
-      body(cells + [it],tbl2)
-  print "C2>",centroid(tbl2)
-  print [(h.name,h.n,h.sd()) for h in tbl2.less]
-  print [h.name for h in tbl2.klass]
+    for row in x.rows:
+      body(row.cells + [it],tbl2,True)
   tbl3= discreteNums(tbl2,[row.cells for row in tbl2._rows])
-  tree = tdiv(tbl3)
-  #for node in dtleaves(tree):
-   # print ""
-    ##for h in node.t.headers: print h.mode(),h.most(),h.n
-    #print centroid(node.t)
-    #break
-  #exit()
-  #snakesAndLadders(tree,tbl3,
-   #                lambda node: medianFromHell(tbl3,node))
-  #for node in dtleaves(tree):
-   # print node.better,node.worse
+  tree2 = tdiv(tbl3)
+  showTdiv(tree2)
+  snakesAndLadders(tree2,tbl3,
+                   lambda node: fromHells(tbl3,
+                                         node.rows,
+                                         opt))
+  ss0,ss1={},{}
+  for node in dtleaves(tree2):
+    says(node._id,':n',len(node.rows),' :score',g3(fromHells(tbl3,node.rows,opt)))
+    if node.ladder:
+      says(" :want",node.ladder._id," :plan",node.better)
+    if node.snake:
+      says(" :hate",node.snake._id," :watch",node.worse)
+    nl()
+   
+    for row in node.rows:
+      asIs,toBe= jumpUp(row,tree2)
+      for h0,h1 in zip(asIs.tbl.less + asIs.tbl.more,
+                   toBe.tbl.less + toBe.tbl.more):
+        s0 = ss0.get(h0.name,Num())
+        s1 = ss1.get(h1.name,Num())
+        s0 + h0.median()
+        s1 + h1.median()
+        ss0[h0.name] = s0
+        ss1[h0.name] = s1
+  print ""
+  for key in ss0:
+    saysln(key, ss0[key].median(), ss1[key].median(), \
+             ss0[key].iqr(),ss1[key].iqr())
 
-def medianFromHell(tbl,node):
-  def val(what):
-    for h in what:
-      cell = cells[h.col]
-      if not cell == The.reader.missing:
-        yield h, h.w, h.norm(cell[1])
-  total = n = 0
-  cells = centroid(tbl)
-  for h,w, val in val(tbl.more):
-    total += w*(val**2)
-    n     += w
-  for h,w,val in val(tbl.less):
-    total += w*((1-val)**2)
-    n     += w
-  print total, n, cells
-  return total**2/n**2
+  #    len(asIs.tbl._rows)
+      
 
 def loosed(f='data/nasa93.csv'):
   dists={}
@@ -471,3 +470,24 @@ if __name__ == '__main__': eval(cmd())
 # July 17
 # housing: 10m8 s nearest1 0.154 0.158
 #           9m8 s nearest2 0.170 0.134 (dist cache)
+
+# july 29
+"""
+data=h	:_178 #1 62% * 8
+data=l	:_166 #1 69% * 23
+data=n	:_160 #3
+|..acap=h	:_172 #2
+|..|..cplx=h	:_178 #1 75% * 4
+|..acap=n	:_160 #1 85% * 14
+data=vh	:_172 #1 85% * 7
+1368,:n,8, :score,0.131 :want,1679, :plan,{8: 'h', 14: 'h', 7: 'n'}
+1476,:n,23, :score,0.572 :hate,1724, :watch,{14: 'n', 7: 'n'}
+1679,:n,4, :score,0.156 :want,1724, :plan,{14: 'n'} :hate,1368, :watch,{7: 'h'}
+1724,:n,14, :score,0.524 :want,1476, :plan,{7: 'l'} :hate,1679, :watch,{8: 'h', 14: 'h'}
+1779,:n,7, :score,0.475 :want,1476, :plan,{7: 'l'} :hate,1548, :watch,{7: 'n'}
+
+            mu1, mu2, sd1, sd2
+?<$defects/,785.0,456.0,25.0,0.0
+?<$effort/,82.0,60.0,16.5,0.0
+?<$months/,14.8,13.9,1.1,0.0
+"""

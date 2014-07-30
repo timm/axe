@@ -62,7 +62,7 @@ def readerings(): return Thing(
     '<'      : lambda z: z.less,
     '='      : lambda z: z.klass,
     '[=<>]'  : lambda z: z.depen,
-    '^[^=<>]': lambda z: z.indep,
+    '^[^=<>].*[^/]$': lambda z: z.indep,
     '.'      : lambda z: z.headers})
 
 @settings

@@ -10,11 +10,11 @@ def prefer(pairs1,pairs2,key = lambda x:x):
   for k,val in pairs1:
     k = key(k)
     out[k] = val
-  for k,(a1,b1) in pairs2:
+  for k,val1 in pairs2:
     k = key(k)
     if k in out:
-      a2,b2=out[k]
-      if a1 == a2 and b1 == b2:
+      val2=out[k]
+      if val1 == val2:
         del out[k]
   return out
 

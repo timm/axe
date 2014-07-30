@@ -64,15 +64,16 @@ def head(cells,t,numc=The.reader.numc):
         where += [header]
   return t
 
-def body(cells,t,rows=True):
+def body(cells,t,keep=True):
   #print "LEN?",len(t._rows)
   for n,header in enumerate(t.headers):
     cell = cells[header.col]
     #print n,"!",cell,"!"
     if not cell == The.reader.missing:
       header + cell
-  if rows: 
-    t._rows += [Row(cells)]
+  if keep: 
+    new = Row(cells)
+    t._rows += [new]
 
 class Row(Thing):
   def __init__(i,cells):
@@ -103,6 +104,7 @@ def discreteNums(tbl,therows):
 
 def clone(tbl1,rows=[],discrete=False,keepSelections=False) :
   def ok(x):
+    if x[-1]=="/":  return x
     return x.replace("$",'') if discrete else x
   tbl2= head([ok(h.name) for h in tbl1.headers],
              table0('copy of '+tbl1.source))

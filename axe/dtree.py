@@ -146,8 +146,11 @@ def apex(test,tree,opt=The.tree):
     if val == opt.missing or val==span:
       return True
     else:
-      lo,hi = span
-      return lo <= val < hi
+      if isinstance(span,tuple):
+        lo,hi = span
+        return lo <= val < hi
+      else:
+        return span == val
   def apex1(cells,tree):
     found = False
     for kid in tree.kids:
@@ -172,14 +175,29 @@ def degrade(test,tree,opt=The.tree) :
   return change(test,tree,opt.worse,opt)
 
 def change(test,tree,how,opt=The.tree):
-  leaf  = apex(test,tree,opt)
+  leaf1  = apex(test,tree,opt)
   new   = old = leaf.mode
   if how(leaf):
     copy = opt.cells(test)[:]
-    for col,val in  how(leaf).items():
+    for col,val in  how(leaf1).items():
       copy[col] = val
     new = classify(Row(copy),tree,opt)
   return old,new
+
+def jumpUp(  test,tree,opt=The.tree):
+  return jump(test,tree,opt.better,opt)
+
+def jumpDown(test,tree,opt=The.tree):
+  return jump(test,tree,opt.worse,opt)
+
+def jump(test,tree,how,opt=The.tree):
+  toBe = asIs  = apex(test,tree,opt)
+  if how(asIs):
+    copy = opt.cells(test)[:]
+    for col,val in  how(asIs).items():
+      copy[col] = val
+    toBe = apex(Row(copy),tree,opt)
+  return asIs,toBe 
 
 def rows1(row,tbl,cells=lambda r: r.cells):
   print ""
@@ -221,13 +239,14 @@ def snakesAndLadders(tree,train,w):
                         key= lambda x: first(x)) 
     # at end of this loop, the last ladder, snakes are closest
     for _,node2 in node1.far:
-      if score(node2) > score(node1):
-        node1.ladder = node2
-        node1.better = prefer(node2.branch,node1.branch,key=lambda x:x.col)
-        
-      if score(node2) < score(node1):
-        node1.snake = node2
-        node1.worse = prefer(node2.branch,node1.branch,key=lambda x:x.col)
+      delta = prefer(node2.branch,node1.branch,key=lambda x:x.col)
+      if delta:
+        if score(node2) > score(node1):
+          node1.ladder = node2
+          node1.better = delta
+        if score(node2) < score(node1):
+          node1.snake = node2
+          node1.worse = delta  
   for node in dtnodes(tree):
     snake = node.snake._id if node.snake else None
     ladder = node.ladder._id if node.ladder else None
