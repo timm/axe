@@ -1,4 +1,4 @@
-def life(width=40,height=40,generations=500,prob=0.15,wait=0.1,seed=None):
+def life(width=40,height=40,generations=500,prob=0.15,wait=0.1,seed=1):
   import numpy,os,time,random
   if seed: random.seed(seed)
   def pause(): time.sleep(wait)

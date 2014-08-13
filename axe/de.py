@@ -145,6 +145,8 @@ class Fixed(About1):
 class Sym(About1) : pass
 
 class Num(About1):
+  "Num has 'bounds' of legal (min,max) values as well
+   as well as "
   def __init__(i,inits=[],name='',
                bounds=(The.math.ninf, The.math.inf)):
     i.zero()
@@ -206,12 +208,13 @@ class Num(About1):
     delta = intrapolate(v,pairs)
     return delta >= i.t(j)
   
-def intrapolate(x, pairs):
-  "bounded to min max of the pairs"
-  lo, hi = pairs[0], pairs[-1]
+def intrapolate(x, points):
+  """find adjacent points containing 'x',
+   return 'y', extrapolating over neighbor 'x's"""
+  lo, hi = points[0], points[-1]
   x1, y1 = lo[0], lo[1]
   if x < x1: return y1
-  for x2,y2 in pairs[1:]:
+  for x2,y2 in points[1:]:
     if x1 <= x < x2:
       deltay = y2 - y1
       deltax = (x- x1)/(x2- x1)
@@ -221,6 +224,7 @@ def intrapolate(x, pairs):
 
 @test
 def numed():
+  "check the Num class"
   rseed(1)
   def push(x,n=0.2):
     return x*(1 + n*rand())
@@ -241,6 +245,8 @@ def numed():
          ,False,n5.same(n2)
          ]
 
+test(); exit()
+
 def interpolated(n=1.5): 
   print interpolate(n, [(1,10),(2, 20),(3, 30)])
 
@@ -248,6 +254,6 @@ def interpolated(n=1.5):
 
 def what(): print "de@tim.2014"
 
-Schaffer()
+#Schaffer()
 
 if __name__ == "__main__": eval(cmd("life.life()"))
