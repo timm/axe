@@ -1,4 +1,4 @@
-![Rules](rules.png "Timm's rules")
+![Rules](img/rules.png "Timm's rules")
  
 tim.menzies@gmail.com  
 Aug 9 2014
