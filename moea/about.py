@@ -1,73 +1,49 @@
-from __future__ import division
-import sys
-sys.dont_write_bytecode = True
-import random
-import life
-
-def help(): print """
-de.py: differential evolution 
-Copyright (c) 2014 Tim Menzies
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
 """
+about.py: meta-knowledge of variables
+Copyright (c) 2014 tim.menzies@gmail.com
+ ______      __                          __      
+/\  _  \    /\ \                        /\ \__   
+\ \ \L\ \   \ \ \____    ___    __  __  \ \ ,_\  
+ \ \  __ \   \ \ '__`\  / __`\ /\ \/\ \  \ \ \/  
+  \ \ \/\ \   \ \ \L\ \/\ \L\ \\ \ \_\ \  \ \ \_ 
+   \ \_\ \_\   \ \_,__/\ \____/ \ \____/   \ \__\
+    \/_/\/_/    \/___/  \/___/   \/___/     \/__/
+ 
+Permission is hereby granted, free of charge, to any
+person obtaining a copy of this software and
+associated documentation files (the "Software"), to
+deal in the Software without restriction, including
+without limitation the rights to use, copy, modify,
+merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to
+whom the Software is furnished to do so, subject to
+the following conditions:
 
-from library import *
+The above copyright notice and this permission
+notice shall be included in all copies or
+substantial portions of the Software.
 
-@settings
-def mathings(): return Thing(
-  inf = float("inf"),
-  ninf = float("-inf"),
-  seed = 1,
-  tiny = 1/float("inf"),
-  centralLimitThreshold=20)
-
-@settings
-def brinkings(): return Thing(
-  tconf=0.95,
-  hot = 102,
-  _secret=30)
-
-@settings
-def symings(): return Thing(
-  missing="?",
-  numc     ='$',
-  patterns = {
-    '\$'     : lambda z: z.nums,
-    '\.'     : lambda z: z.syms,
-    '>'      : lambda z: z.more,
-    '<'      : lambda z: z.less,
-    '[=<>]'  : lambda z: z.depen,
-    '^[^=<>]': lambda z: z.indep,
-    '.'      : lambda z: z.headers})
-
-
-def brinked():
-  print The.brink
-
-###################################################
-#  utils
-
-def rseed(n = The.math.seed): random.seed(n)
-def div(x,y) : return x/(y+The.math.tiny)
-
-###################################################
-# Meta knowledge 'bout the objects
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY
+OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
+OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
+IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE."""                                                 
+                                    
+"""
+Bout
+|-- About
+|-- |-- Schaffer
+|-- About1
+|-- |-- Id
+|-- |-- Fixed
+|-- |-- Sym
+|-- |-- Num
+"""             
 
 class Bout(object): 
   def ok(i,x)   : pass
@@ -121,12 +97,7 @@ class Schaffer(About):
     i.set("<f1", lst, x**2       )
     i.set("<f2", lst, (x - 2)**2 )
     
-    
-    
-      
-             
-
-###################################################
+  
 class About1(Bout):
   def about(i): i
 
@@ -146,7 +117,7 @@ class Sym(About1) : pass
 
 class Num(About1):
   "Num has 'bounds' of legal (min,max) values as well
-   as well as "
+   as well as observed 'lo','hi' nums seen so far."""
   def __init__(i,inits=[],name='',
                bounds=(The.math.ninf, The.math.inf)):
     i.zero()
@@ -154,27 +125,29 @@ class Num(About1):
     i.bounds = bounds
     for x in inits: i.inc(x)
   def ok(i,n):
+    "Legal if in bounds (or unknown)"
     if n == The.sym.missing:
       return True
     if n == i.bound: return True
     return i.bound[0] <= n < i.bound[1]
   def guess(i,old):
+    "Use old values to guess new value."
     if i.n > The.math.centralLimitThreshold:
       return random.gauss(i.mu,i.sd())
     else:
       lo,hi = i.bound[0], i.bound[1]
       return lo + rand()*(hi - lo)
   def zero(i):
+    "Reset all knowledge back to Eden."
     i.lo,i.hi = The.math.inf,The.math.ninf
     i.n = i.mu = i.m2 = 0
   def __lt__(i,j): 
+    "Sorting function."
     return i.mu < j.mu
-  def sd(i) :
-     if i.n < 2: return 0 
-     return (max(0,i.m2)/(i.n - 1))**0.5
   def __iadd__(i,x): i.inc(x); return i
   def __isub__(i,x): i.sub(x); return i
   def inc(i,x):
+    "Remember 'x'."
     if x > i.hi: i.hi = x
     if x < i.lo: i.lo = x
     i.n  += 1
@@ -182,14 +155,21 @@ class Num(About1):
     i.mu += delta/(1.0*i.n)
     i.m2 += delta*(x - i.mu)
   def sub(i,x):
+    "Forget 'x'."
     if i.n < 2:  return i.zero()
     i.n  -= 1
     delta = x - i.mu
     i.mu -= delta/(1.0*i.n)
     i.m2 -= delta*(x - i.mu) 
+  def sd(i) :
+    "Diversity around the mean"
+     if i.n < 2: return 0 
+     return (max(0,i.m2)/(i.n - 1))**0.5
   def norm(i,x):
+    "Map 'x' to 0..1 for lo..hi"
     return (x - i.lo)/ (i.hi - i.lo + 0.00001)
   def t(i,j):
+    "Difference in means, adjusted for sd."
     signal = abs(i.mu - j.mu)
     noise  = (i.sd()**2/i.n + j.sd()**2/j.n)**0.5
     return signal / noise
@@ -203,57 +183,8 @@ class Num(About1):
                            (  5,  4.032),(10, 3.169),
                            ( 20,  2.845),(80, 2.64 ),
                            (320,  2.58 ))}):
+    "Test for statistically significant difference"
     v     = i.n + j.n - 2
     pairs = threshold[conf]
     delta = intrapolate(v,pairs)
     return delta >= i.t(j)
-  
-def intrapolate(x, points):
-  """find adjacent points containing 'x',
-   return 'y', extrapolating over neighbor 'x's"""
-  lo, hi = points[0], points[-1]
-  x1, y1 = lo[0], lo[1]
-  if x < x1: return y1
-  for x2,y2 in points[1:]:
-    if x1 <= x < x2:
-      deltay = y2 - y1
-      deltax = (x- x1)/(x2- x1)
-      return y1 + deltay * deltax
-    x1,y1 = x2,y2
-  return hi[1]
-
-@test
-def numed():
-  "check the Num class"
-  rseed(1)
-  def push(x,n=0.2):
-    return x*(1 + n*rand())
-  n1=Num(x    for x in range(30))
-  n2=Num(30+x for x in range(30))
-  lst1 = [x   for x in range(30)]
-  n3, n4 = Num(lst1), Num()
-  for x in lst1:  n4 += x
-  for x in lst1: n4 -= x
-  n5 = Num(0.0001+x for x in range(30))
-  return [14.5, n1.mu
-         ,8.80, g2(n1.sd())
-         ,30,   n2.lo
-         ,59,   n2.hi
-         ,0,    n4.sd()
-         ,0,    n4.n
-         ,True, n5.same(n1)
-         ,False,n5.same(n2)
-         ]
-
-test(); exit()
-
-def interpolated(n=1.5): 
-  print interpolate(n, [(1,10),(2, 20),(3, 30)])
-
-################################################################### Models
-
-def what(): print "de@tim.2014"
-
-#Schaffer()
-
-if __name__ == "__main__": eval(cmd("life.life()"))
