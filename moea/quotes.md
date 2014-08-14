@@ -40,12 +40,13 @@ It tolls for _thee_.
 DOOR SOURCE: OpenSource, OpenDoor, SpecialSauce
 ---------------------------------------------------
 
-I make my money by what I can give away. I make my code
-open source so it open doors to people who, otherwise,
-might not care to. Once inside those doors, I earn a living
-configuring (adding the special sauce) to the open tools
-since,  for the tools I create, I now the little tweaks that 
-make all the difference.
+For years and years, I made my money by what I could
+give away. I made my code open source so it open
+doors to people who, otherwise, might not care
+to. Once inside those doors, I earned a living
+configuring (adding the special sauce) to the open
+tools since, for the tools I create, I knew the
+little tweaks that make all the difference.
 
 SHOW OFF:
 --------
@@ -53,7 +54,6 @@ SHOW OFF:
 Code should know how to show off. All files end in
 
     if __name__ == '__main__': doSomethingCool();
-
 
 See also _YCYR_.
 
@@ -117,8 +117,9 @@ is much better).
 STACK OVERFLOW
 ---------------
 
-Any Python question you want answered has already been asked and answered
-already on stackoverflow.com. Read it!
+Any Python question you want answered has already
+been asked and answered already on
+stackoverflow.com. Read it!
 
 CODING RULES
 ============
