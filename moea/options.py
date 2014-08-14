@@ -41,6 +41,7 @@ from __future__ import division
 import sys
 sys.dont_write_bytecode = True
 
+### Defining 'Things' ##############################
 class Thing(object):
   def __init__(i,**dict): i.update(dict)
   def also(i,**dict)    : i.update(dict); return i
@@ -64,8 +65,11 @@ def dump(d,s='',lvl=0):
     s= dump(v,s,lvl+1)
   return s
 
+### Defining Settings (nested 'Things') ############
 The = Thing()
 def settings(f=None,cache=[]):
+  """Adds 'f' to the things; if called with no args,
+   reset all options back to original values."""
   if f : 
     what = f.func_name[:-4]
     The.__dict__[what] = f() 
@@ -74,6 +78,7 @@ def settings(f=None,cache=[]):
     for key,f in cache: The.__dict__[key] = f()
   return f
 
+### Begin the actual settings ######################
 @settings
 def mathings(): return Thing(
   inf = float("inf"),
@@ -107,5 +112,14 @@ def symings():
       '[=<>]'         : depen,
       '^[^=<>].*[^!]$': indep,
       '.'             : about})
+
+@settings
+def saings():
+  return Thing(p       = 0.33,
+               epsilon = 0.01,
+               kmax    = 1000,
+               stagger = 1.0,
+               era     = 30,
+               runs    = 50)
 
 if __name__ == "__main__": print The

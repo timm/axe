@@ -44,9 +44,10 @@ For years and years, I made my money by what I could
 give away. I made my code open source so it open
 doors to people who, otherwise, might not care
 to. Once inside those doors, I earned a living
-configuring (adding the special sauce) to the open
-tools since, for the tools I create, I knew the
-little tweaks that make all the difference.
+configuring (adding the special sauce) those the
+open tools since, for the tools I created, I was one
+of the few people who really knew the little tweaks
+that make all the difference.
 
 SHOW OFF:
 --------

@@ -32,12 +32,11 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES
 OR OTHER LIABILITY, WHETHER IN AN ACTION OF
 CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE."""                                                 
-  
+DEALINGS IN THE SOFTWARE.""" 
+
 from __future__ import division
 import sys,re,random,math
 sys.dont_write_bytecode = True
-from options import *
 from lib import *
                                   
 """
@@ -60,14 +59,25 @@ class About(Bout):
   def __init__(i,cols=[]):
     i.depen, i.indep,  i.nums, i.syms= [],[],[],[] 
     i.more,  i.less, i.about, i.where = [],[],[],{}
+    i.names=[]
     i.cols(cols)
-  def cols(i,lst,numc=The.sym.numc):
+  def cols(i,lst):
     for col,header in enumerate(lst): 
       header.col = col
       i.where[header.name] = header
+      i.name += [header.name]
       for pattern,val in The.sym.patterns.items():
         if re.search(pattern,header.name):
           val(i).append(header)
+  def clone(i):
+    numc=The.sym.numc
+    for one in i.about:
+      what = Num if numc in one.name else Sym
+      out += [what(name=one.name)]
+    return About(out)
+  def seen(i,lst):
+    for header,item in zip(i.about,lst):
+      header.seen(item)
   def ok(i,lst):
     for about,x in zip(i.about(),lst):
       if not about.ok(x):
@@ -85,33 +95,11 @@ class About(Bout):
   def get(i,lst,name):
     return lst[i.where[name].col]
 
-class Schaffer(About):
+class Model(About): 
   def __init__(i):
-    super(Schaffer,i).__init__()
-    i.cols([ Num(name='$x', 
-                 bounds = (-10000,10000))
-            ,Num(name='<f1')
-            ,Num(name='<f2')
-             ])
-  def score(i,lst):
-    x = i.get(lst, "$x")
-    i.set("<f1", lst, x**2       )
-    i.set("<f2", lst, (x - 2)**2 )
-    
-def _schaffered1():
-  s= Schaffer()
-  print "\n:about", s.about
-  print "\n:indep", s.indep
-  print "\n:depen", s.depen
-  
-def _schaffered2(seed=1):
-  rseed(seed)
-  about= Schaffer()
-  for _ in range(10):
-    one = about.guess()
-    about.score(one)
-    saysln(*one)
-    
+    super(Model,i).__init__()
+    i.cols(i.spec())
+
 class About1(Bout): pass
 
 class Sym(About1) : pass
@@ -190,5 +178,28 @@ class Num(About1):
     delta = intrapolate(v,pairs)
     return delta >= i.t(j)
 
+@test
+def numed():
+  "check the Num class"
+  rseed(1)
+  def push(x,n=0.2):
+    return x*(1 + n*rand())
+  n1=Num(x    for x in range(30))
+  n2=Num(30+x for x in range(30))
+  lst1 = [x   for x in range(30)]
+  n3, n4 = Num(lst1), Num()
+  for x in lst1:  n4 += x
+  for x in lst1: n4 -= x
+  n5 = Num(0.0001+x for x in range(30))
+  return [14.5, n1.mu
+         ,8.80, g2(n1.sd())
+         ,30,   n2.lo
+         ,59,   n2.hi
+         ,True, n3.sd() == n4.sd()
+          ,0,    n4.sd()
+         ,0,    n4.n
+         ,True, n5.same(n1)
+         ,False,n5.same(n2)
+         ]
 
 if __name__ == "__main__": eval(cmd())

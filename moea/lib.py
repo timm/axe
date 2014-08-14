@@ -62,7 +62,7 @@ def test(f=None,cache=[]):
       print '\n# Final score: %s/%s = %s%% CORRECT' \
           % (ok,(ok+no),int(100*ok/(ok+no)))
 
-### Handy one-liners ###############################
+### Math stuff  ###############################
 def first(x): return x[0]
 def second(x): return x[1]
 def third(x): return x[2]
@@ -70,15 +70,17 @@ def fourth(x): return x[3]
 def fifth(x): return x[4]
 def last(x): return x[-1]
 
-rand = random.random
-any  = random.choice
-  
-### Handy random stuff #############################
+### Random stuff  ###############################
+
 def shuffle(lst) : 
   random.shuffle(lst)
   return lst
+
 def rseed(n=The.math.seed):
   random.seed(n)
+
+rand = random.random
+any  = random.choice
 
 ### Printing #######################################
 def nl(): print ""
@@ -104,14 +106,37 @@ def prettyd(i,name=None):
   pairs = [':%s %s' % (k,me[k]) for k in order]
   return name+'{'+ ', '.join(pairs) +'}'
 
-
-# write out tricks
+# succinct printing tricks
 def saysln(*lst): 
   says(*lst); nl()
 def says(*lst)  : 
   say(', '.join(map(str, lst)))
 def say(x): 
   sys.stdout.write(str(x)); sys.stdout.flush()
+
+
+  
+### Misc stuff #############################
+
+def div(x,y) : 
+  "avoid div/0 errors"
+  return x/(y+The.math.tiny)
+  
+def intrapolate(x, points):
+  """find adjacent points containing 'x',
+   return 'y', extrapolating over neighbor 'x's.
+   e.g. interpolate(1.5, [(1,10),(2, 20),(3, 30)])
+   returns 15"""
+  lo, hi = points[0], points[-1]
+  x1, y1 = lo[0], lo[1]
+  if x < x1: return y1
+  for x2,y2 in points[1:]:
+    if x1 <= x < x2:
+      deltay = y2 - y1
+      deltax = (x- x1)/(x2- x1)
+      return y1 + deltay * deltax
+    x1,y1 = x2,y2
+  return hi[1]
 
 ### Coercion  #####################################
 def atom(x):
