@@ -64,7 +64,7 @@ class About(Bout):
   def cols(i,lst,numc=The.sym.numc):
     for col,header in enumerate(lst): 
       header.col = col
-      i.where[header.name] = col
+      i.where[header.name] = header
       for pattern,val in The.sym.patterns.items():
         if re.search(pattern,header.name):
           val(i).append(header)
@@ -80,11 +80,9 @@ class About(Bout):
     return lst
   def score(i,lst): pass
   def set(i,name,lst, val):
-    print name
     lst[i.where[name].col] = val
     return val
   def get(i,lst,name):
-    print name
     return lst[i.where[name].col]
 
 class Schaffer(About):
@@ -106,28 +104,15 @@ def _schaffered1():
   print "\n:indep", s.indep
   print "\n:depen", s.depen
   
-def _schaffered2():
-  rseed()
+def _schaffered2(seed=1):
+  rseed(seed)
   about= Schaffer()
   for _ in range(10):
     one = about.guess()
     about.score(one)
-    print one
+    saysln(*one)
     
-class About1(Bout):
-  def about(i): i
-
-class Id(About1):
-  id=0
-  def guess(i,old):
-    x = Id.id = Id.id+1 
-    return x
-
-class Fixed(About1):
-  def __init__(i):
-    i.cache=None
-  def guess(i,old):
-    return i.cache
+class About1(Bout): pass
 
 class Sym(About1) : pass
 
