@@ -80,9 +80,11 @@ class About(Bout):
     return lst
   def score(i,lst): pass
   def set(i,name,lst, val):
+    print name
     lst[i.where[name].col] = val
     return val
   def get(i,lst,name):
+    print name
     return lst[i.where[name].col]
 
 class Schaffer(About):
@@ -106,8 +108,11 @@ def _schaffered1():
   
 def _schaffered2():
   rseed()
-  s= Schaffer()
-  print s.guess()
+  about= Schaffer()
+  for _ in range(10):
+    one = about.guess()
+    about.score(one)
+    print one
     
 class About1(Bout):
   def about(i): i
