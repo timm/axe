@@ -81,4 +81,4 @@ def life(seed=1,width=40,height=40,generations=500,
     randoms(prob/1000.0) 
     pause()
 
-if __name__ == 'main'
+if __name__ == '__main__': life()
