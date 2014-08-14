@@ -81,6 +81,9 @@ def rseed(n=The.math.seed):
   random.seed(n)
 
 ### Printing #######################################
+def nl(): print ""
+
+# printing numbers
 def g1(x)    : return round(x,1)
 def g2(x)    : return round(x,2)
 def g3(x)    : return round(x,3)
@@ -88,7 +91,19 @@ def gs1(lst) : return map(g1,lst)
 def gs2(lst) : return map(g2,lst)
 def gs3(lst) : return map(g3,lst)
 
-def nl(): print ""
+# printing nested dictionaries
+
+def prettyd(i,name=None):
+  "show public keys, in sorted order"
+  def public(key): 
+      return not key[0] == "_"
+  me    = i.__dict__
+  name = name or i.__class__.__name__
+  order = sorted(k for k in me.keys() 
+                 if public(k))
+  pairs = [':%s %s' % (k,me[k]) for k in order]
+  return name+'{'+ ', '.join(pairs) +'}'
+
 
 # write out tricks
 def saysln(*lst): 

@@ -37,8 +37,8 @@ And therefore never send to know for whom the _bell_ tolls;
 It tolls for _thee_.  
 -- John Donne, 1623
 
-OpenSource, OpenDoor, SpecialSauce
-----------------------------------
+DOOR SOURCE: OpenSource, OpenDoor, SpecialSauce
+---------------------------------------------------
 
 I make my money by what I can give away. I make my code
 open source so it open doors to people who, otherwise,
@@ -53,6 +53,9 @@ SHOW OFF:
 Code should know how to show off. All files end in
 
     if __name__ == '__main__': doSomethingCool();
+
+
+See also _YCYR_.
 
 TTS: Teach the Source:
 ----------------------
@@ -75,7 +78,9 @@ PYTHON RULES
 --------------------
 
 Use Python 2.7+, not Python 3, since many useful
-libraries are NOT yet ported to Python 3.
+libraries are NOT yet ported to Python 3. 
+
+Note: this rule will hopefully change, soon.
  
 ATMC: Add the missing code.
 ---------------------------
@@ -86,6 +91,11 @@ All python files should start with
     import sys 
     sys.dont_write_bytecode = True
     """ some copyright notice """
+	
+Also, as said in _SHOW OFF_, all files should end
+with:
+
+	if __name__ == '__main__': doSomethingCool();
 
 BCD: Beware container defaults 
 ------------------------------
@@ -192,9 +202,6 @@ disk" and "restart from part-way". That way, if the
 long computation crashes, you can restart from some
 interim point (and not redo it all).
 
-
-
-
 TAG: 'Things' Are Good
 ---------------------
 
@@ -262,8 +269,7 @@ not normally found in real world data. So favor
 non-parametric distributions over trite normal
 descriptions of data.
 
-
-RNC: RANDOM NOT CRAZY 
+RNC: Random not crazy 
 ---------------------
 
 Often the stochastic version is simpler, or scales

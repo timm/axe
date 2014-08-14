@@ -38,7 +38,8 @@ DEALINGS IN THE SOFTWARE."""
 # i found on the web... but now I can't recall the 
 # source. Anyone care to take credit?
 
-def life(seed=1,width=40,height=40,generations=500,
+def life(seed=1,generations=500,
+         width=40,height=40,
          prob=0.15,wait=0.1):
   import numpy,os,time,random
   if seed: random.seed(seed)
@@ -70,7 +71,7 @@ def life(seed=1,width=40,height=40,generations=500,
   life = numpy.zeros((width, height), 
                      dtype=numpy.byte)
   randoms(prob)
-  for i in range(generations):
+  for i in range(generations+1):
     clear()
     print "generation:", i,"of",\
           generations,"from",seed,"\n"

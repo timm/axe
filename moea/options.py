@@ -57,7 +57,7 @@ def dump(d,s='',lvl=0):
       later += [(k,v)]
     else:
       s += ':%s %s ' % (k,
-                        v.__name__ if callable(v) else v)
+           v.__name__ if callable(v) else v)
   s += '\n'
   for k,v in later:
     s += '# '+('   ' *  lvl) + ':%s' % k + '\n'
@@ -65,9 +65,13 @@ def dump(d,s='',lvl=0):
   return s
 
 The = Thing()
-def settings(f=None):
-  if f : The.__dict__[f.func_name[:-4]] = f() 
-  else : print The
+def settings(f=None,cache=[]):
+  if f : 
+    what = f.func_name[:-4]
+    The.__dict__[what] = f() 
+    cache += [(what,f)]
+  else : 
+    for key,f in cache: The.__dict__[key] = f()
   return f
 
 @settings
@@ -84,16 +88,24 @@ def brinkings(): return Thing(
   hot = 102)
 
 @settings
-def symings(): return Thing(
-  missing="?",
-  numc     ='$',
-  patterns = {
-    '\$'     : lambda z: z.nums,
-    '\.'     : lambda z: z.syms,
-    '>'      : lambda z: z.more,
-    '<'      : lambda z: z.less,
-    '[=<>]'  : lambda z: z.depen,
-    '^[^=<>]': lambda z: z.indep,
-    '.'      : lambda z: z.headers})
+def symings(): 
+  def nums(z): return z.nums
+  def syms(z): return z.syms
+  def more(z): return z.more
+  def less(z): return z.less
+  def depen(z): return z.depen
+  def indep(z): return z.indep
+  def about(z): return z.about
+  return Thing(
+    missing="?",
+    numc     ='$',
+    patterns = {
+      '\$'            : nums,
+      '\.'            : syms,
+      '>'             : more,
+      '<'             : less,
+      '[=<>]'         : depen,
+      '^[^=<>].*[^!]$': indep,
+      '.'             : about})
 
 if __name__ == "__main__": print The

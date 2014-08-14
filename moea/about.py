@@ -53,37 +53,32 @@ Bout
 
 class Bout(object): 
   def ok(i,x)   : pass
-  def guess(i,old): pass
+  def guess(i,old,control=None): pass
   def __repr__(i): return prettyd(i)
   
 class About(Bout):
   def __init__(i,cols=[]):
     i.depen, i.indep,  i.nums, i.syms= [],[],[],[] 
-    i.more,  i.less, i.headers, i.where = [],[],[],{}
+    i.more,  i.less, i.about, i.where = [],[],[],{}
     i.cols(cols)
-  def cols(i,lst):
-    for n,one in enumerate(lst): i.has(n,one)
-  def has(i,col,header,numc=The.sym.numc):
-    if isinstance(col,str):
-      this = Num if numc in header else Sym
-      header = this(name=col)
-    header.col = col
-    i.where[col.name] = header
-    for pattern,val in The.sym.patterns.items():
-      if re.search(pattern,col.name):
-        where  = val(i)
-        where += [header]
+  def cols(i,lst,numc=The.sym.numc):
+    for col,header in enumerate(lst): 
+      header.col = col
+      i.where[header.name] = col
+      for pattern,val in The.sym.patterns.items():
+        if re.search(pattern,header.name):
+          val(i).append(header)
   def ok(i,lst):
     for about,x in zip(i.about(),lst):
       if not about.ok(x):
         return False
     return True
-  def guess(i,olds=None):
-    lst = olds or [None] * len(i.headers)
+  def guess(i,olds=None,control=None):
+    lst = olds or [None] * len(i.about)
     for header,old in zip(i.indep,lst):
-      lst[header.pos] = header.guess(old)
+      lst[header.col] = header.guess(old)
     return lst
-  def score(i): guess
+  def score(i,lst): pass
   def set(i,name,lst, val):
     lst[i.where[name].col] = val
     return val
@@ -93,17 +88,27 @@ class About(Bout):
 class Schaffer(About):
   def __init__(i):
     super(Schaffer,i).__init__()
-    lohi = (-10000,10000)
-    i.cols([ Num(name='$x', bounds = lohi)
+    i.cols([ Num(name='$x', 
+                 bounds = (-10000,10000))
             ,Num(name='<f1')
             ,Num(name='<f2')
-           ])
+             ])
   def score(i,lst):
     x = i.get(lst, "$x")
     i.set("<f1", lst, x**2       )
     i.set("<f2", lst, (x - 2)**2 )
     
+def _schaffered1():
+  s= Schaffer()
+  print "\n:about", s.about
+  print "\n:indep", s.indep
+  print "\n:depen", s.depen
   
+def _schaffered2():
+  rseed()
+  s= Schaffer()
+  print s.guess()
+    
 class About1(Bout):
   def about(i): i
 
@@ -122,7 +127,7 @@ class Fixed(About1):
 class Sym(About1) : pass
 
 class Num(About1):
-  "Num has 'bounds' of legal (min,max) values as well
+  """Num has 'bounds' of legal (min,max) values as well
    as well as observed 'lo','hi' nums seen so far."""
   def __init__(i,inits=[],name='',
                bounds=(The.math.ninf, The.math.inf)):
@@ -134,14 +139,14 @@ class Num(About1):
     "Legal if in bounds (or unknown)"
     if n == The.sym.missing:
       return True
-    if n == i.bound: return True
-    return i.bound[0] <= n < i.bound[1]
+    if n == i.bounds: return True
+    return i.bounds[0] <= n < i.bounds[1]
   def guess(i,old):
     "Use old values to guess new value."
     if i.n > The.math.centralLimitThreshold:
       return random.gauss(i.mu,i.sd())
     else:
-      lo,hi = i.bound[0], i.bound[1]
+      lo,hi = i.bounds[0], i.bounds[1]
       return lo + rand()*(hi - lo)
   def zero(i):
     "Reset all knowledge back to Eden."
@@ -169,8 +174,8 @@ class Num(About1):
     i.m2 -= delta*(x - i.mu) 
   def sd(i) :
     "Diversity around the mean"
-     if i.n < 2: return 0 
-     return (max(0,i.m2)/(i.n - 1))**0.5
+    if i.n < 2: return 0 
+    return (max(0,i.m2)/(i.n - 1))**0.5
   def norm(i,x):
     "Map 'x' to 0..1 for lo..hi"
     return (x - i.lo)/ (i.hi - i.lo + 0.00001)
@@ -194,3 +199,6 @@ class Num(About1):
     pairs = threshold[conf]
     delta = intrapolate(v,pairs)
     return delta >= i.t(j)
+
+
+if __name__ == "__main__": eval(cmd())
