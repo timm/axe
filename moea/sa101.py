@@ -42,13 +42,15 @@ class Watch(object):
   def __iter__(i): return i
   def __init__(i,m):
     i.m = m
-    i.step, i.jump = 0, The.sa.era
-    i.logs = [i.newLogs()]
-    for item in i.logs[0]: item.era=i.step
-  def newLogs():
+    i.step, i.jump = 0, 0
+    i.logs = []
+  def newLogs(i,at):
     tmp = i.m.clone()
-    for one in tmp: one.era = i.step
+    for one in tmp: one.at = at
     return tmp
+  def seen(i,one):
+    i.tick()
+    i.logs[0].seen(one)
   def tick(i):
     i.step += 1
     if i.step > i.jump:
@@ -56,11 +58,11 @@ class Watch(object):
         one,two= i.logs[0], i.logs[1]
         if one.same(two):
           raise StopIteration()
+      i.logs  = [i.newLogs(i.jump)] + i.logs
       i.jump += The.sa.era
-      i.logs = [i.newLogs()] + i.logs
-    return i.step,i.logs[0] 
+    return i.step
   def next(i):
-    if i.step < The.sa.kmax:
+    if i.step <= The.sa.kmax:
       return i.tick()
     else:
       raise StopIteration()

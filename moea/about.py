@@ -77,7 +77,8 @@ class About(Bout):
     return About(out)
   def seen(i,lst):
     for header,item in zip(i.about,lst):
-      header.seen(item)
+      if not item == None:
+        header.seen(item)
   def ok(i,lst):
     for about,x in zip(i.about(),lst):
       if not about.ok(x):
