@@ -70,6 +70,9 @@ def fourth(x): return x[3]
 def fifth(x): return x[4]
 def last(x): return x[-1]
 
+def lt(x,y): return x < y
+def gt(x,y): return x > y
+
 ### Random stuff  ###############################
 
 def shuffle(lst) : 
@@ -81,6 +84,16 @@ def rseed(n=The.math.seed):
 
 rand = random.random
 any  = random.choice
+
+### Interation #####################################
+
+def item(items):
+  if isinstance(items,(list,tuple)):
+    for one in items:
+      for x in item(one):
+        yield x
+  else:
+    yield items
 
 ### Printing #######################################
 def nl(): print ""
@@ -117,6 +130,8 @@ def say(x):
 
   
 ### Misc stuff #############################
+
+def noop(*lst): return lst
 
 def div(x,y) : 
   "avoid div/0 errors"

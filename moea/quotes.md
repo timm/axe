@@ -107,6 +107,28 @@ with an argument that defaults to, say, an empty
 list will always be talking to the *same* list,
 every time you call the function.
 
+IRU: Iterators are us
+---------------------
+
+Don't understand the following? Then work it out!
+
+    def item(items):
+      if isinstance(items,(list,tuple)):
+        for one in items:
+          for x in item(one):
+            yield x
+      else:
+        yield items
+
+
+LRU: Lambdas are us
+-------------------
+
+Anonymous functions (lambdas) rule. Allows for simple
+implementation of generics, just by passing in a lambda
+body.
+
+
 NO W: No Wraps
 ---------------
 

@@ -114,12 +114,18 @@ def symings():
       '.'             : about})
 
 @settings
-def saings():
+def optimizeings():
+  def noImprovementBin(betters,worses):
+    return not binaryDomination(betters,worses)
   return Thing(p       = 0.33,
                epsilon = 0.01,
-               kmax    = 1000,
-               stagger = 1.0,
                era     = 30,
-               runs    = 50)
+               runs    = 50,
+               repeats = 10,
+               noImprovement= noImprovementBin)
+
+@settings
+def saings():
+  return Thing(stagger = 1.0)
 
 if __name__ == "__main__": print The

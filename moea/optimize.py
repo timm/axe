@@ -1,13 +1,16 @@
 """
-sa101.py: simulated annealling
+optimze.py: generics for all optimizers
 Copyright (c) 2014 tim.menzies@gmail.com
 
-/\  _`\ /\  _  \              /' \  /'__`\  /' \    
-\ \,\L\_\ \ \L\ \      __    /\_, \/\ \/\ \/\_, \   
- \/_\__ \\ \  __ \    /\_\   \/_/\ \ \ \ \ \/_/\ \  
-   /\ \L\ \ \ \/\ \   \/_/_     \ \ \ \ \_\ \ \ \ \ 
-   \ `\____\ \_\ \_\    /\_\     \ \_\ \____/  \ \_\
-    \/_____/\/_/\/_/    \/_/      \/_/\/___/    \/_/                                                    
+/\  __`\        /\ \__  __              __                  
+\ \ \/\ \  _____\ \ ,_\/\_\    ___ ___ /\_\  ____      __   
+ \ \ \ \ \/\ '__`\ \ \/\/\ \ /' __` __`\/\ \/\_ ,`\  /'__`\ 
+  \ \ \_\ \ \ \L\ \ \ \_\ \ \/\ \/\ \/\ \ \ \/_/  /_/\  __/ 
+   \ \_____\ \ ,__/\ \__\\ \_\ \_\ \_\ \_\ \_\/\____\ \____\
+    \/_____/\ \ \/  \/__/ \/_/\/_/\/_/\/_/\/_/\/____/\/____/
+             \ \_\                                          
+              \/_/                                       
+
 Permission is hereby granted, free of charge, to any
 person obtaining a copy of this software and
 associated documentation files (the "Software"), to
@@ -38,36 +41,29 @@ import sys,re,random,math
 sys.dont_write_bytecode = True
 from lib import *
 
-"""
-steps=Steps() # <== keep point,same steps across all repeats
-for _ in xrange(20):
-  resetLearner()
-  for step in steps:
-    do stomeing with step
-    steps.seen(newThing)
-report(steps.logs)
-"""
-
-def study(model=model, repeats=The.optimize.repeats, 
+def study(model, repeats=The.optimize.repeats, 
           reset=noop, run=noop,report=noop,):
-  logs = {} # important. same log over all runs
-  for _ in range(repeats): # repeat n times
-    reset() # reset the optimzer
+  logs = {}                #use same log on all runs
+  for _ in range(repeats): #repeat for a few times
+    reset()                # reset optimzer
     for tick in Watch(model,logs): 
       results = run(tick)   # offer some guesses
       watch.record(results) # record what you saw
   report(logs) # report results in all repeats
 
-def binaryDomination(header1,header2):
-  for now,then in zip(nows.less,thens.less):
-        if not now.same(then):
-          if now.mu < then.mu:
-            return False
-  for now,then in zip(nows.more, thens.more):
-        if not now.same(then):
-          if now.mu > then.mu:
-            return False
-
+def binaryDomination(goods,bads):
+  "checks that at least one better, and no worse"
+  better = 0
+  for good,bad in zip(goods.less,bads.less):
+    if good.same(bad)   : break
+    if good.mu < bad.mu : better += 1
+    if good.mu > bad.mu : return False
+  for good,bad in zip(goods.more, bads.more):
+    if good.same(bad)   : break
+    if good.mu > bad.mu : good += 1
+    if good.mu < bad.mu : return False
+  return better > 0
+            
 class Watch(object):
   def __iter__(i): return i
   def __init__(i,model,logs=None,earlyStop=True):
@@ -75,47 +71,38 @@ class Watch(object):
     i.thisLog  = {}
     i.model,i.earlyStop = model,earlyStop
     i.step, i.era  = 0, 0
-  def record(i,results):   
-    for log in [i.logs, i.thisLog]:
+  def record(i,results):
+    """ Each recorded result is one clock tick.
+        Record all results in both  logs"""
+    both = [i.logs, i.thisLog]     
+    for log in both:
       if not i.era in log:
         log[i.era] = i.model.clone() 
-    here = i.thisLog[i.era]
-    there= i.logs[i.era]
     for result in item(results):
-      here.seen(result)
-      there.seen(result)
+      i.step += 1
+      for log in both:
+        log[i.era].seen(result)
   def stop(i):
-    if not i.earlyStop: 
-      return False
-    if len(i.thisLog)> 1:
-      nows  = i.thisLog[i.era]
-      thens = i.thisLog[i.era - The.sa.era]
-    
-      return True
-    else:
-      return False
+    """if more than two eras, suggest
+       stopping if no improvement."""
+    if len(i.thisLog) > 1:
+      now = i.era
+      before = now - The.sa.era
+      if The.optimize.noImprovement(
+                           i.thisLog[now],
+                           i.thisLog[then]):
+        return True
+    return False
   def next(i):
-    i.step += 1
-    stop = True
-    if i.step >= i.era: 
-      stop = i.canStop()
-      if not stop:
-        i.era += The.sa.era          
-    if stop: 
+    "return next time tick, unless we need to halt."
+    if i.step > The.sa.max: # end of run!
       return StopIteration()
-    elif i.step <= The.sa.max:
-      return StopIteration()
-    else:
-      return i.step
-
-w = Watch(10)
-for x in w: 
-  print x
-  w.tick()
-  w.tick()
-  w.tick()
-
-exit()
+    if i.step >= i.era:     # pause to reflect
+      if i.earlyStop():     # maybe exit early
+        if i.stop():        
+           return StopIteration()
+      i.era += The.sa.era   # set next pause point
+    return i.step
 
 # def watch(report=f):
 #   k = knext = 0
