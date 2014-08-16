@@ -1,0 +1,6 @@
+commit:
+	git commit -am "stuff"
+	git push origin master
+
+update:
+	git pull origin master
