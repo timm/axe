@@ -1,4 +1,5 @@
 commit:
+	git status
 	git commit -am "stuff"
 	git push origin master
 
