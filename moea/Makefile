@@ -4,3 +4,6 @@ commit:
 
 update:
 	git pull origin master
+
+status:
+	git status
