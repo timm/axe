@@ -299,3 +299,12 @@ RNC: Random not crazy
 Often the stochastic version is simpler, or scales
 better, or both.
 
+MOEA rules
+==========
+
+MaxSmarter
+----------
+
+Never show users something minimizing something. This
+is America! Always maximize!
+

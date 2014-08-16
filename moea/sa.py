@@ -44,12 +44,12 @@ from optimize import *
 def sa(about=Schaffer):
   model = None
   def maybe(old,new,t):
-    return math.e**((old - new)*1.0/t) > rand(); ###
+    return math.e**((old - new)*1.0/t) < rand(); ###
   def baseline(model):
     for _ in xrange(The.sa.baseline):
       model.instance()
   def energy(lst):
-    return 1 - fromHell(model,lst)
+    return fromHell(model,lst)
   def neighbor(old):
     new = old[:]
     for num in model.num:
@@ -68,16 +68,16 @@ def sa(about=Schaffer):
   history = {}  ##
   for _ in xrange(The.optimize.repeats): ##
     model = about()
-    baseline(model)
+    baseline(model) # initialize 
     sb = s = model.instance()
     eb = e = energy(s)
     for k,log in Watch(kmax,about,history): ##
       sn = neighbor(s)
       en = energy(sn)
-      if en < eb:
+      if en > eb:
         sb,eb = sn,en
-      if en < e 
-        s,e, = sn,en
+      if en > e 
+        s,e = sn,en
       elif maybe(e,en,k/kmax**The.sa.stagger):
         s,e = sn,en
       log.record(e) ##

@@ -70,11 +70,12 @@ class About(Bout):
         if re.search(pattern,header.name):
           val(i).append(header)
   def clone(i):
-    numc=The.sym.numc
-    for one in i.about:
-      what = Num if numc in one.name else Sym
-      out += [what(name=one.name)]
-    return About(out)
+    return i.__class__()
+#numc=The.sym.numc
+ #   for one in i.about:
+  #    what = Num if numc in one.name else Sym
+   #   out += [what(name=one.name)]
+    #return About(out)
   def seen(i,lst):
     for header,item in zip(i.about,lst):
       if not item == None:
