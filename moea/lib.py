@@ -83,7 +83,8 @@ def rseed(n=The.math.seed):
   random.seed(n)
 
 rand = random.random
-any  = random.choice
+def any(x,y):
+  return x + (y-x)*rand()
 
 ### Interation #####################################
 

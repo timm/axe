@@ -89,7 +89,11 @@ class About(Bout):
     for header,old in zip(i.indep,lst):
       lst[header.col] = header.guess(old)
     return lst
-  def score(i,lst): pass
+  def score(i,lst): return lst
+  def instance(i):
+    lst = i.score(i.guess())
+    i.seen(lst)
+    return lst
   def set(i,name,lst, val):
     lst[i.where[name].col] = val
     return val
@@ -121,12 +125,8 @@ class Num(About1):
     if n == i.bounds: return True
     return i.bounds[0] <= n < i.bounds[1]
   def guess(i,old):
-    "Use old values to guess new value."
-    if i.n > The.math.centralLimitThreshold:
-      return random.gauss(i.mu,i.sd())
-    else:
-      lo,hi = i.bounds[0], i.bounds[1]
-      return lo + rand()*(hi - lo)
+    lo,hi = i.bounds[0], i.bounds[1]
+    return any(lo,hi)
   def zero(i):
     "Reset all knowledge back to Eden."
     i.lo,i.hi = The.math.inf,The.math.ninf

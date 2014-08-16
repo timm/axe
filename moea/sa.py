@@ -41,11 +41,46 @@ from lib import *
 from models import *
 from optimize import *
 
-def sa(model=Schaffer):
+def sa(about=Schaffer):
+  model = None
   def maybe(old,new,t):
-    return math.e**((old - new)*1.0/t) < rand()
-  def neighbor(lst):
-    for header in model.indep:
-      if rand() > The.sa
-
+    return math.e**((old - new)*1.0/t) > rand()
+  def baseline(model):
+    for _ in xrange(The.sa.baseline):
+      model.instance()
+  def energy(lst):
+    return 1 - fromHell(model,lst)
+  def neighbor(old):
+    new = old[:]
+    for num in model.num:
+      if rand() > The.sa.p:
+        new[header.col] = any(num.lo,num.hi)
+    if not model.ok(new):
+      return old
+    else:
+      new = model.score(new)
+      model.seen(new)
+      return new
+  def report():
+    for k in sorted(history.keys()):
+      print history[k]
+  kmax    = The.sa.max
+  history = {}  ##
+  for _ in xrange(The.optimize.repeats): ##
+    model = about()
+    baseline(model)
+    sb = s = model.instance()
+    eb = e = energy(s)
+    for k,log in Watch(kmax,about,history): ##
+      sn = neighbor(s)
+      en = energy(sn)
+      if en < eb:
+        sb,eb = sn,en
+      if en < e 
+        s,e, = sn,en
+      elif maybe(e,en,k/kmax**The.sa.stagger):
+        s,e = sn,en
+      log.record(e) ##
+  report()
+  
 if __name__ == '__main__': eval(cmd())

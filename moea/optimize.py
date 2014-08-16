@@ -41,14 +41,14 @@ import sys,re,random,math
 sys.dont_write_bytecode = True
 from lib import *
 
-def study(model, repeats=The.optimize.repeats, 
+def study(about, repeats=The.optimize.repeats, 
           reset=noop, run=noop,report=noop,):
   logs = {}                #use same log on all runs
-  for _ in range(repeats): #repeat for a few times
+  for _ in xrange(repeats): #repeat for a few times
     reset()                # reset optimzer
-    for tick in Watch(model,logs): 
-      results = run(tick)   # offer some guesses
-      watch.record(results) # record what you saw
+    watch=Watch(about,logs)
+    for tick in watch:
+      run(tick,watch)  
   report(logs) # report results in all repeats
 
 def binaryDomination(goods,bads):
@@ -63,25 +63,36 @@ def binaryDomination(goods,bads):
     if good.mu > bad.mu : good += 1
     if good.mu < bad.mu : return False
   return better > 0
+ 
+def fromHell(about,lst):
+  "Euclidean distance from worst goal; a.k.a. hell"
+  scores = n = 0 
+  normed = lambda z: z.norm(lst[z.col])
+  for x in about.less:
+    n += 1
+    scores += (1 - normed(x))**2
+  for x in about.more:
+    n += 1
+    scores += normed(x)**2
+  return div(scores**0.5, n**0.5)
             
 class Watch(object):
   def __iter__(i): return i
-  def __init__(i,model,logs=None,earlyStop=True):
+  def __init__(i,most,about,logs=None,earlyStop=True):
     i.logs = logs or {}
     i.thisLog  = {}
-    i.model,i.earlyStop = model,earlyStop
+    i.most, i.about,i.earlyStop = most,about,earlyStop
     i.step, i.era  = 0, 0
-  def record(i,results):
+  def record(i,result):
     """ Each recorded result is one clock tick.
         Record all results in both  logs"""
     both = [i.logs, i.thisLog]     
     for log in both:
       if not i.era in log:
-        log[i.era] = i.model.clone() 
-    for result in item(results):
-      i.step += 1
-      for log in both:
-        log[i.era].seen(result)
+        log[i.era] = i.about()
+    i.step += 1
+    for log in both:
+      log[i.era].seen(result)
   def stop(i):
     """if more than two eras, suggest
        stopping if no improvement."""
@@ -95,14 +106,14 @@ class Watch(object):
     return False
   def next(i):
     "return next time tick, unless we need to halt."
-    if i.step > The.sa.max: # end of run!
+    if i.step > i.most: # end of run!
       return StopIteration()
     if i.step >= i.era:     # pause to reflect
       if i.earlyStop():     # maybe exit early
         if i.stop():        
            return StopIteration()
       i.era += The.sa.era   # set next pause point
-    return i.step
+    return i.step,i
 
 # def watch(report=f):
 #   k = knext = 0

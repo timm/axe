@@ -50,6 +50,7 @@ class Schaffer(Model):
     x = i.get(lst, "$x")
     i.set("<f1", lst, x**2       )
     i.set("<f2", lst, (x - 2)**2 )
+    return lst
     
 def _schaffered1():
   m= Schaffer()
@@ -59,12 +60,12 @@ def _schaffered1():
   
 def _schaffered2(seed=1):
   rseed(seed)
-  m= Schaffer()
+  about = Schaffer()
   out = []
   for _ in range(10):
-    one = m.guess()
-    m.score(one)
-    out += [one]
+    data = about.guess()
+    about.score(data)
+    out += [data]
   for one in sorted(out):
     print one
 
