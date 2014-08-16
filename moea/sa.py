@@ -44,7 +44,7 @@ from optimize import *
 def sa(about=Schaffer):
   model = None
   def maybe(old,new,t):
-    return math.e**((old - new)*1.0/t) > rand()
+    return math.e**((old - new)*1.0/t) > rand(); ###
   def baseline(model):
     for _ in xrange(The.sa.baseline):
       model.instance()
