@@ -3,10 +3,9 @@ import sys, random.math
 sys.dont_write_bytecode = True
 
 ### Place to store things and stuff ################
-class Thing(object):
-  def __init__(i,**d): more(i,d)
+class Thing:
+  def __init__(i,**d): i.__dict__.update(d)
 
-def more(i,**fields): i.__dict__.update(fields)
 ### Place to store options #########################
 
 The = Thing(cache= Thing(keep=128))
@@ -35,36 +34,15 @@ def gn(lst,n):
   fmt = '%.' + str(n) + 'f'
   return ', '.join([(fmt % x) for x in sorted(lst)])
 
-def median(lst,sort=False):
-  n = len(lst)
-  p = n // 2
-  if (n % 2): 
-    return lst[p]
-  else:
-    q = p + 1
-    q = max(0,(min(q,n)))
-    return (lst[p] + lst[q])/2
-
-def ent(d,n=None):
-  if n==None: n = sum(d.values)
-  e=0
-  for k in d:
-    p = k[d]/n
-    e -= p*log2(p) if p else 0
-  return e
-
 ### Classes ########################################
 
 class Log(Thing):
   "Keep a random sample of stuff seen so far."
-  def __init__(i,inits=[],nump=True):
+  def __init__(i,inits=[],label=''):
+    i.label = label
     i._cache,i.n,i._has = [],0,None
-    i.nump = nump
-    if i.nump:
-      i.lo, i.hi = 10**32, -10**32
-    else:
-      i.counts,i.mode,i.most={},None,0
-    map(i.__iadd__,inits)
+    i.setup()
+    map(i.__add__,inits)
   def __iadd__(i,x):
     if x == None: return x
     i.n += 1
@@ -76,38 +54,56 @@ class Log(Thing):
       if rand() <= The.cache.keep/i.n:
         changed = True
         i._cache[int(rand()*The.cache.keep)] = x
-    if changed:
+    if changed:      
+      i._has = None # wipe out 'what follows'
       i.change(x)
     return i
-  def change(i,x):
-    i._has = None # wipe out 'what follows'
-    if i.nump: 
-      i.lo = min(x,i.lo) 
-      i.hi = max(x,i.hi)
-    else:
-      n= i.counts[x] = i.counts.get(x,0) + 1
-      if n > i.most:
-        i.mode,i.most = x,n
-  def __call__(i): 
+  def __call__(i):  
     return  any(i._cache)
-  def ish(i,f=0.1):
-    lst = i._cache
-    return any(lst) + f*(any(lst) - any(lst))
   def has(i):
-    "Calculate what follows from the cache contents"
-    if not i._has:
-      if i.nump: 
-        lst = i._cache = sorted(i._cache)
-        n   = len(i._cache)     
-        i._has = Thing(
-          median = median(i._cache)
-          iqr    = lst[int(n*.75)] - lst[int(n*.5)],
-          lo     = i.lo, hi  = i.hi)
-      else:
-        i._has = Thing(counts = i.counts,
-                       ent    = ent(i.counts),
-                       mode   = i.mode)
+    i._has = i._has or i.also()
     return i._has
+
+def Num(Log):
+  def setup(i):
+    i.lo, i.hi = 10**32, -10**32
+  def change(i,x):
+    i.lo = min(i.lo,x)
+    i.hi = max(i.hi,x)
+  def also(i):
+    lst = i._cache = sorted(i._cache)
+    n   = len(i._cache)     
+    return Thing(
+      median = i.median()
+      iqr    = lst[int(n*.75)] - lst[int(n*.5)],
+      lo     = i.lo, 
+      hi     = i.hi)
+  def ish(i,f=0.1): 
+    return i() + f*(i() - i())
+  def median(i):
+    n = len(i._cache)
+    p = n // 2
+    if (n % 2):  return i._cache[p]
+    q = p + 1
+    q = max(0,(min(q,n)))
+    return (i._cache[p] + i._cache[q])/2
+
+class Sym(Log):
+  def setup(i):
+    i.counts,i.mode,i.most={},None,0
+  def change(i,x):
+    n= i.counts[x] = i.counts.get(x,0) + 1
+    if n > i.most:
+      i.mode,i.most = x,n
+  def also(i):
+    return  Thing(counts = i.counts,
+                  ent    = i,entropy(),
+                  mode   = i.mode)
+  def entropy(i,e=0):
+    for k in i.counts:
+      p = i.counts[k]/i.n
+      e -= p*log2(p) if p else 0
+    return e    
 
 ### Classes ########################################
 
@@ -116,6 +112,7 @@ class In:
     i.txt,i.lo,i.hi = txt,lo,hi
   def __call__(i): 
     return i.lo+(i.hi - i.lo)*rand()
+  def log(): return Num()
 
 class Of:
   def __init__(i, indep=None, dep=None):
@@ -127,8 +124,8 @@ class Of:
 class Model:
   def __init__(i):
     i.of = i.spec()
-    i.log= Of(indep= [Log() for _ in i.of.indep],
-                dep= [Log() for _ in i.of.dep])
+    i.log= Of(indep= [x.log() for x in i.of.indep],
+                dep= [Num()   for _ in i.of.dep])
   def indepIT(i):
     "Make new it."
     return Of(indep=[f() for f in i.of.indep])
