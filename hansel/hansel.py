@@ -1,25 +1,29 @@
 from __future__ import division
-import sys, random,math
+import sys, random, math, datetime, time
 sys.dont_write_bytecode = True
 
 ### Place to store things and stuff ################
-class Thing:
+class O: 
   def __init__(i,**d): i.__dict__.update(d)
 
 ### Place to store options #########################
 
-The = Thing(cache= Thing(keep    = 128,
-                         pending = 4),
-            sa   = Thing(cooling = 0.6,
-                         kmax    = 1000,
-                         epsilon = 1.01,
-                         verbose = True,
-                         era     = 50,
-                         baseline = 100))
+The = O(cache= O(keep    = 128,
+                 pending = 4),
+        sa   = O(cooling = 0.6,
+                 kmax    = 1000,
+                 epsilon = 1.01,
+                 verbose = True,
+                 patience= 250,
+                 era     = 25,
+                 seed    = 1,
+                 baseline = 100))
 
 ### Misc utils #####################################
-rand= random.random
-any=  random.choice
+rand=  random.random
+any=   random.choice
+rseed= random.seed
+
 def log2(x): return math.log(x)/math.log(2)
 def say(x): 
   sys.stdout.write(str(x)); sys.stdout.flush()
@@ -30,7 +34,7 @@ def showd(d,lvl=0):
   for k in sorted(d.keys()):
     if k[0] == "_": continue
     val = d[k]
-    if isinstance(val,(dict,Thing)):
+    if isinstance(val,(dict,O)):
        after += [k]
     else:
       if callable(val):
@@ -47,11 +51,37 @@ def g0(lst): return gn(lst,0)
 
 def gn(lst,n):
   fmt = '%.' + str(n) + 'f'
-  return ', '.join([(fmt % x) for x in sorted(lst)])
+  return ', '.join([(fmt % x) for x in lst])
+
+def norm(x,lo,hi):
+  tmp = (x - lo) / (hi - lo + 0.00001) 
+  return 1 - max(0,min(tmp,1))
+
+def x(n): return '%3s' % int(100*n)
+
+def study(f):
+  """All outputs have date,time, notes,
+  a reset of the options,  settings, runtimes."""
+  def wrapper(*lst):
+    what = f.__name__
+    doc  = f.__doc__ 
+    if doc:
+      doc= re.sub(r"\n[ \t]*","\n# ",doc)
+    show = datetime.datetime.now().strftime
+    print "\n###",what,"#" * 50
+    print "#", show("%Y-%m-%d %H:%M:%S")
+    if doc: print "#",doc
+    t1 = time.time()
+    f(*lst)
+    t2 = time.time() 
+    print "\n" + ("-" * 50)
+    showd(The)
+    print "\n# Runtime: %.3f secs" % (t2-t1)
+  return wrapper
 
 ### Classes ########################################
 
-class Log(Thing):
+class Log():
   "Keep a random sample of stuff seen so far."
   def __init__(i,inits=[],label=''):
     i.label = label
@@ -86,10 +116,12 @@ class Num(Log):
   def change(i,x):
     i.lo = min(i.lo, x)
     i.hi = max(i.hi, x)
+  def norm(i,x):
+    return (x - i.lo)/(i.hi - i.lo + 0.000001)
   def report(i):
     lst = i._cache = sorted(i._cache)
     n   = len(lst)     
-    return Thing(
+    return O(
       median= i.median(),
       iqr   = lst[int(n*.75)] - lst[int(n*.5)],
       lo    = i.lo, 
@@ -112,9 +144,9 @@ class Sym(Log):
     if c > i.most:
       i.mode,i.most = x,c
   def report(i):
-     return Thing(dist= i.dist(), 
-                  ent = i.entropy(),
-                  mode= i.mode)
+     return O(dist= i.dist(), 
+              ent = i.entropy(),
+              mode= i.mode)
   def dist(i):
     n = sum(i.counts.values())
     return sorted([(d[k]/n, k) for 
@@ -143,37 +175,33 @@ class In:
   def log(i): 
     return Num()
 
-class XY:
-  def __init__(i, x=None, y=None):
-    i.x, i.y = x,y
-  def __repr__(i):
-    return ', '.join(map(str,[':x',i.x,':y',i.y]))
-
 class Model:
+  def name(i): 
+    return i.__class__.__name__
   def __init__(i):
     i.of = i.spec()
-    i.log= XY(x= [z.log() for z in i.of.x],
+    i.log= O(x= [z.log() for z in i.of.x],
               y= [Num()   for _ in i.of.y])
   def indepIT(i):
     "Make new it."
-    return XY(x=[z() for z in i.of.x])
+    return O(x=[z() for z in i.of.x])
   def depIT(i,it):
     "Complete it's dep variables."
     it.y = [f(it) for f in i.of.y]
+    return it
   def logIT(i,it):
     "Remember what we have see in it."
-    for val,log in zip(it, i.log):
-      log += val
+    for val,log in zip(it.x, i.log.x): log += val
+    for val,log in zip(it.y, i.log.y): log += val
   def aroundIT(i,it,p=0.5):
     "Find some place around it."
     def n(val,f): 
       return f() if rand() < p else val
     old = it.x
     new = [n(x,f) for x,f in zip(old,i.of.x)]
-    return XY(x=new)
+    return O(x=new)
 
 #XY = a pair of related indep,dep lists
-
 #it = actual values
 #of = meta knowledge of members of it
 #log = a record of things seen in it
@@ -181,9 +209,55 @@ class Model:
 #seperate (1) guesses indep variables (2) using them to
 #calc dep values (3) logging what was picked
 
+def burp(*lst):  
+  The.sa.verbose and say(
+    ', '.join(map(str,lst)))
+
+def sa(m):
+  def energy(m,it): 
+    m.depIT(it)
+    return sum(it.y) 
+  def maybe(old,new,temp): 
+    return math.e**((new - old)/temp) < rand()  
+  base = Num([energy(m, m.indepIT()) 
+             for _ in xrange(The.sa.baseline)])
+  sb = s = m.indepIT()
+  eb = e = norm(energy(m,s), base.lo, base.hi)
+  for k in xrange(The.sa.kmax):
+    if not k % The.sa.era: 
+      burp("\n", x(eb), ' ')
+    k += 1
+    mark = "."
+    sn = m.aroundIT(s,p=1)
+    en = norm(energy(m,sn), base.lo, base.hi)
+    if en >  (e * The.sa.epsilon):
+      s,e = sn,en
+      mark = "+"
+    elif maybe(e,en, 
+               k/The.sa.kmax**The.sa.cooling):
+      s,e = sn,en
+      mark = "?"
+    if en > (eb * The.sa.epsilon):
+      sb,eb = sn,en
+      mark = "!"
+    if k > The.sa.patience:
+      if sb > 1/The.sa.epsilon:
+        break
+    burp(mark)
+  return sb,eb    
+
+@study
+def saDemo(m):
+  rseed(The.sa.seed)
+  print "\n",m.name()
+  sb,eb = sa(m)
+  x= g3(sb.x)
+  y= g3(sb.y)
+  print "\n------\n:e",eb,"\n:y",y,"\n:x",x
+
 class ZDT1(Model):
   def spec(i):
-    return XY(x= [In(0,1,z) for z in range(30)],
+    return O(x= [In(0,1,z) for z in range(30)],
               y= [i.f1,i.f2])
   def f1(i,it):
     return it.x[0]
@@ -192,59 +266,12 @@ class ZDT1(Model):
 
 class Schaffer(Model):
   def spec(i):
-    return XY(x= [In(-10,10,0)],
+    return O(x= [In(-5,5,0)],
               y= [i.f1,i.f2])
   def f1(i,it):
     x=it.x[0]; return x**2
   def f2(i,it):
     x=it.x[0]; return (x-2)**2
 
-def burp(x):  
-  The.sa.verbose and say(x)
-
-def sa(m):
-  return sa1(m, The.sa.epsilon,
-                The.sa.kmax,
-                The.sa.cooling,
-                The.sa.era,
-                The.sa.baseline)
-
-def sa1(m, epsilon,kmax,cooling,era,baseline):
-  def energy(it): 
-    m.depIT(it)
-    return sum(it.y)
-  def norm(e,lo,hi):
-    return 1 - (e - lo) / (hi - lo)
-  def candidate():
-    it = m.indepIT()
-    m.depIT(it)
-    return it
-  def maybe(old,new,temp): 
-    return math.e**(-1*(old - new)/temp) < rand()
-  def baseline():
-    es = []
-    for _ in xrange(The.sa.baseline):
-      it = m.indepIT()
-      es += [energy(it)]
-    es = sorted(es)
-    return es[0],es[-1]
-  lo,hi = baseline()
-  sb = s = m.indepIT()
-  eb = e = norm(energy(s),lo,hi)
-  print eb
-  for k in xrange(kmax):
-    k += 1
-    sn = m.aroundIT(s)
-    en = norm(energy(sn),lo,hi)
-    if en > (eb * epsilon):
-      sb,sb = sn,en; burp("!")
-    if en > (e *  epsilon):
-      s,e = sn,en; burp("+")
-    elif maybe(e,en, k/kmax):
-      s,e = sn,en; burp("?")
-    if not k % era: 
-      burp("\n" + str(eb) + " ")
-    burp(".")
-  print eb    
-
-print sa(Schaffer())
+saDemo(Schaffer())
+saDemo(ZDT1())
