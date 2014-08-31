@@ -10,14 +10,14 @@ class O:
 
 The = O(cache= O(keep    = 128,
                  pending = 4),
-        sa   = O(cooling = 0.6,
-                 kmax    = 1000,
+        misc = O(verbose = True,
                  epsilon = 1.01,
-                 verbose = True,
-                 patience= 250,
-                 era     = 25,
                  seed    = 1,
-                 baseline = 100))
+                 era     = 25),
+        sa =   O(cooling = 0.6,
+                 kmax    = 1000,
+                 patience= 250,
+                 baseline= 100))
 
 ### Misc utils #####################################
 rand=  random.random
@@ -58,6 +58,10 @@ def norm(x,lo,hi):
   return 1 - max(0,min(tmp,1))
 
 def x(n): return '%3s' % int(100*n)
+
+def burp(*lst):  
+  The.misc.verbose and say(
+    ', '.join(map(str,lst)))
 
 def study(f):
   """All outputs have date,time, notes,
@@ -209,9 +213,7 @@ class Model:
 #seperate (1) guesses indep variables (2) using them to
 #calc dep values (3) logging what was picked
 
-def burp(*lst):  
-  The.sa.verbose and say(
-    ', '.join(map(str,lst)))
+
 
 def sa(m):
   def energy(m,it): 
@@ -224,36 +226,45 @@ def sa(m):
   sb = s = m.indepIT()
   eb = e = norm(energy(m,s), base.lo, base.hi)
   for k in xrange(The.sa.kmax):
-    if not k % The.sa.era: 
+    if not k % The.misc.era: 
       burp("\n", x(eb), ' ')
     k += 1
     mark = "."
     sn = m.aroundIT(s,p=1)
     en = norm(energy(m,sn), base.lo, base.hi)
-    if en >  (e * The.sa.epsilon):
+    if en >  (e * The.misc.epsilon):
       s,e = sn,en
       mark = "+"
     elif maybe(e,en, 
                k/The.sa.kmax**The.sa.cooling):
       s,e = sn,en
       mark = "?"
-    if en > (eb * The.sa.epsilon):
+    if en > (eb * The.misc.epsilon):
       sb,eb = sn,en
       mark = "!"
     if k > The.sa.patience:
-      if sb > 1/The.sa.epsilon:
+      if sb > 1/The.misc.epsilon:
         break
     burp(mark)
   return sb,eb    
 
 @study
 def saDemo(m):
-  rseed(The.sa.seed)
+  rseed(The.misc.seed)
   print "\n",m.name()
   sb,eb = sa(m)
   x= g3(sb.x)
   y= g3(sb.y)
   print "\n------\n:e",eb,"\n:y",y,"\n:x",x
+
+class Schaffer(Model):
+  def spec(i):
+    return O(x= [In(-5,5,0)],
+              y= [i.f1,i.f2])
+  def f1(i,it):
+    x=it.x[0]; return x**2
+  def f2(i,it):
+    x=it.x[0]; return (x-2)**2
 
 class ZDT1(Model):
   def spec(i):
@@ -264,14 +275,8 @@ class ZDT1(Model):
   def f2(i,it):
     return 1 + 9*sum(it.x[1:]) / 29
 
-class Schaffer(Model):
-  def spec(i):
-    return O(x= [In(-5,5,0)],
-              y= [i.f1,i.f2])
-  def f1(i,it):
-    x=it.x[0]; return x**2
-  def f2(i,it):
-    x=it.x[0]; return (x-2)**2
+
+
 
 saDemo(Schaffer())
 saDemo(ZDT1())
