@@ -1,20 +1,20 @@
 from __future__ import division
-import sys, random, math, datetime, time
+import sys, random, math, datetime, time,re
 sys.dont_write_bytecode = True
 
 ### Place to store things and stuff ################
-class O: 
+class o: 
   def __init__(i,**d): i.__dict__.update(d)
 
 ### Place to store options #########################
 
-The = O(cache= O(keep    = 128,
+The = o(cache= o(keep    = 128,
                  pending = 4),
-        misc = O(verbose = True,
+        misc = o(verbose = True,
                  epsilon = 1.01,
                  seed    = 1,
                  era     = 25),
-        sa =   O(cooling = 0.6,
+        sa =   o(cooling = 0.6,
                  kmax    = 1000,
                  patience= 250,
                  baseline= 100))
@@ -34,7 +34,7 @@ def showd(d,lvl=0):
   for k in sorted(d.keys()):
     if k[0] == "_": continue
     val = d[k]
-    if isinstance(val,(dict,O)):
+    if isinstance(val,(dict,o)):
        after += [k]
     else:
       if callable(val):
@@ -57,7 +57,7 @@ def norm(x,lo,hi):
   tmp = (x - lo) / (hi - lo + 0.00001) 
   return 1 - max(0,min(tmp,1))
 
-def x(n): return '%3s' % int(100*n)
+def x(n): return ':%3.1f' % n
 
 def burp(*lst):  
   The.misc.verbose and say(
@@ -125,7 +125,7 @@ class Num(Log):
   def report(i):
     lst = i._cache = sorted(i._cache)
     n   = len(lst)     
-    return O(
+    return o(
       median= i.median(),
       iqr   = lst[int(n*.75)] - lst[int(n*.5)],
       lo    = i.lo, 
@@ -148,7 +148,7 @@ class Sym(Log):
     if c > i.most:
       i.mode,i.most = x,c
   def report(i):
-     return O(dist= i.dist(), 
+     return o(dist= i.dist(), 
               ent = i.entropy(),
               mode= i.mode)
   def dist(i):
@@ -184,11 +184,11 @@ class Model:
     return i.__class__.__name__
   def __init__(i):
     i.of = i.spec()
-    i.log= O(x= [z.log() for z in i.of.x],
+    i.log= o(x= [z.log() for z in i.of.x],
               y= [Num()   for _ in i.of.y])
   def indepIT(i):
     "Make new it."
-    return O(x=[z() for z in i.of.x])
+    return o(x=[z() for z in i.of.x])
   def depIT(i,it):
     "Complete it's dep variables."
     it.y = [f(it) for f in i.of.y]
@@ -203,7 +203,7 @@ class Model:
       return f() if rand() < p else val
     old = it.x
     new = [n(x,f) for x,f in zip(old,i.of.x)]
-    return O(x=new)
+    return o(x=new)
 
 #XY = a pair of related indep,dep lists
 #it = actual values
@@ -216,6 +216,11 @@ class Model:
 
 
 def sa(m):
+  def more(k,e):
+    if k > The.sa.patience:
+      if e > 1/The.misc.epsilon:
+        return False
+    return True
   def energy(m,it): 
     m.depIT(it)
     return sum(it.y) 
@@ -225,9 +230,10 @@ def sa(m):
              for _ in xrange(The.sa.baseline)])
   sb = s = m.indepIT()
   eb = e = norm(energy(m,s), base.lo, base.hi)
-  for k in xrange(The.sa.kmax):
+  k = 0
+  while k <  The.sa.kmax and more(k,eb):
     if not k % The.misc.era: 
-      burp("\n", x(eb), ' ')
+      burp("\n", str(k).zfill(4),x(eb), ' ') 
     k += 1
     mark = "."
     sn = m.aroundIT(s,p=1)
@@ -242,14 +248,12 @@ def sa(m):
     if en > (eb * The.misc.epsilon):
       sb,eb = sn,en
       mark = "!"
-    if k > The.sa.patience:
-      if sb > 1/The.misc.epsilon:
-        break
     burp(mark)
   return sb,eb    
 
 @study
 def saDemo(m):
+  "Basic study."
   rseed(The.misc.seed)
   print "\n",m.name()
   sb,eb = sa(m)
@@ -259,7 +263,7 @@ def saDemo(m):
 
 class Schaffer(Model):
   def spec(i):
-    return O(x= [In(-5,5,0)],
+    return o(x= [In(-5,5,0)],
               y= [i.f1,i.f2])
   def f1(i,it):
     x=it.x[0]; return x**2
@@ -268,14 +272,12 @@ class Schaffer(Model):
 
 class ZDT1(Model):
   def spec(i):
-    return O(x= [In(0,1,z) for z in range(30)],
+    return o(x= [In(0,1,z) for z in range(30)],
               y= [i.f1,i.f2])
   def f1(i,it):
     return it.x[0]
   def f2(i,it):
     return 1 + 9*sum(it.x[1:]) / 29
-
-
 
 
 saDemo(Schaffer())
