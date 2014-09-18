@@ -12,7 +12,8 @@ status:
 	- git status
 
 # 'Makefile'
-MARKDOWN = pandoc --from markdown_github --to html --standalone 
+MARKDOWN = pandoc --from markdown_github --to html 
+PATCH = sed 's?<br />??g'
 all: $(patsubst %.md,%.html,$(wildcard *.md)) 
 
 clean:
@@ -20,5 +21,5 @@ clean:
 	rm -f *.bak *~
 
 %.html: %.md
-	$(MARKDOWN) $< --output $@
+	(bash _head $@ ; cat _side _neck; $(MARKDOWN) $< ;cat _tail) | $(PATCH) > $@
 

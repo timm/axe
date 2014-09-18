@@ -90,3 +90,57 @@ body > #sidebar
 
 #content h3
 {clear:both; margin:30px 0 10px 0; color:#64723B; font-weight:normal; font-size: 2em; letter-spacing:-2px;}
+
+pre { background: white;
+     }
+
+code{white-space: pre;}
+
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+
+
+code, samp, kbd {
+	font-family: "Courier New", Courier, monospace, sans-serif;
+	text-align: left;
+	color: #555;
+	}
+xpre xcode {
+	line-height: 1.6em;
+	font-size: 11px;
+	}
+pre {
+	padding: 0.1em 0.5em 0.3em 0.7em;
+	border: 1px dashed orange;
+	border-left: 11px solid orange;
+	margin: 1.7em 0 1.7em 0.3em;
+	overflow: auto;
+	width: 93%;
+	}
+/* target IE7 and IE6 */
+*:first-child+html pre {
+	padding-bottom: 2em;
+	overflow-y: hidden;
+	overflow: visible;
+	overflow-x: auto; 
+	}
+* html pre { 
+	padding-bottom: 2em;
+	overflow: visible;
+	overflow-x: auto;
+	}
