@@ -12,7 +12,7 @@ status:
 	- git status
 
 # 'Makefile'
-MARKDOWN = pandoc --from markdown_github --to html --standalone 
+MARKDOWN = pandoc --css stypesheets/stylesheet.css --from markdown_github --to html --standalone 
 all: $(patsubst %.md,%.html,$(wildcard *.md)) 
 
 clean:
