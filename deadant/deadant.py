@@ -6,6 +6,8 @@ class o:
   def __init__(i,**d): i.has().update(d)
   def has(i)         : return i.__dict__
 
+The=o(cache=o(dist=True))
+
 def div(x,y): return x/(y+0.00001)
 def lt(x,y) : return x<y
 def gt(x,y) : return x>y
@@ -19,12 +21,14 @@ class Model:
              y  = [None]*len(i.objectives()))
   memos = {}
   def dist(i,j,k):
-    if j.id >  k.id:
+    if not The.cache.dist: 
+      return i.dist0(i,j,k)
+    if j.id > k.id: 
       return i.dist(k,j):
     key = j.id,k.id
     if key in Model.memos: 
       return Model.memos[key]
-    d = Model.memos[key] = dist0(i,j,k)
+    d= Model.memos[key] = dist0(i,j,k)
     return d
   def dist0(i,j,k):
     deltas,ws = 0,0
