@@ -9,7 +9,7 @@ class Abcd:
     i.known = {}; i.a= {}; i.b= {}; i.c= {}; i.d= {}
   def __call__(i,actual=None,predicted=None):
     return i.keep(actual,predicted)
-  def keep(i,actual,predict):
+  def tell(i,actual,predict):
     i.knowns(actual)
     i.knowns(predict)
     if actual == predict: i.yes += 1 
@@ -28,14 +28,14 @@ class Abcd:
     if (i.known[x] == 1):
       i.a[x] = i.yes + i.no
   def header(i):
-    print "#",('{0:20s} {1:10s}  {2:4s}  {3:4s} {4:4s} '+ \
-					 '{5:4s}{6:4s} {7:4s} {8:3s} {9:3s} '+ \
+    print "#",('{0:20s} {1:11s}  {2:4s}  {3:4s} {4:4s} '+ \
+					 '{5:4s}{6:4s} {7:3s} {8:3s} {9:3s} '+ \
            '{10:3s} {11:3s}{12:3s}{13:10s}').format(
       "db", "rx", 
      "n", "a","b","c","d","acc","pd","pf","prec",
       "f","g","class")
     print '-'*100
-  def report(i):
+  def ask(i):
     def p(y) : return int(100*y + 0.5)
     def n(y) : return int(y)
     pd = pf = pn = prec = g = f = acc = 0
@@ -54,3 +54,16 @@ class Abcd:
           i.rx,  n(b + d), n(a), n(b),n(c), n(d), 
           p(acc), p(pd), p(pf), p(prec), p(f), p(g),x)
       #print x,p(pd),p(prec)
+
+def _Abcd():
+  import random
+  abcd = Abcd(db='randomIn',rx='jiggle')
+  train = list('aaaaaaaaaaaaaaaaaaaaaabbbbb')
+  test  = train[:]
+  random.shuffle(test)
+  for actual, predicted in zip(train,test):
+    abcd.tell(actual,predicted)
+  abcd.header()
+  abcd.ask()
+
+if __name__ == "__main__": _Abcd()
